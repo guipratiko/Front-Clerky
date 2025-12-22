@@ -24,6 +24,7 @@ const MindClerky: React.FC = () => {
   const [isClearingContacts, setIsClearingContacts] = useState(false);
   const [showContactsModal, setShowContactsModal] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [showVariablesModal, setShowVariablesModal] = useState(false);
 
   // Estados do formulário de criação
   const [workflowName, setWorkflowName] = useState('');
@@ -472,9 +473,100 @@ const MindClerky: React.FC = () => {
             onUpdate={(data) => {
               handleUpdateNodeData(selectedNode.id, data);
             }}
+            onShowVariablesModal={() => setShowVariablesModal(true)}
           />
         </Modal>
       )}
+
+      {/* Modal de ajuda sobre variáveis */}
+      <Modal
+        isOpen={showVariablesModal}
+        onClose={() => setShowVariablesModal(false)}
+        title={t('mindClerky.nodeSettings.variablesModalTitle')}
+        size="lg"
+      >
+        <div className="space-y-4">
+          <div>
+            <p className="text-sm text-gray-700 dark:text-gray-300 mb-4">
+              {t('mindClerky.nodeSettings.variablesModalDescription')}
+            </p>
+            
+            <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4 mb-4">
+              <h4 className="font-semibold text-blue-900 dark:text-blue-200 mb-2">
+                {t('mindClerky.nodeSettings.variablesFromTypebot')}
+              </h4>
+              <p className="text-sm text-blue-800 dark:text-blue-300">
+                {t('mindClerky.nodeSettings.variablesFromTypebotDescription')}
+              </p>
+            </div>
+
+            <div className="space-y-3">
+              <h4 className="font-semibold text-gray-900 dark:text-gray-100">
+                {t('mindClerky.nodeSettings.availableVariables')}
+              </h4>
+              
+              <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-4 space-y-2">
+                <div className="flex items-start gap-2">
+                  <code className="text-sm bg-white dark:bg-gray-700 px-2 py-1 rounded font-mono text-blue-600 dark:text-blue-400">
+                    $Name
+                  </code>
+                  <span className="text-sm text-gray-600 dark:text-gray-400 flex-1">
+                    {t('mindClerky.nodeSettings.variableNameDescription')}
+                  </span>
+                </div>
+                <div className="flex items-start gap-2">
+                  <code className="text-sm bg-white dark:bg-gray-700 px-2 py-1 rounded font-mono text-blue-600 dark:text-blue-400">
+                    $Telefone
+                  </code>
+                  <span className="text-sm text-gray-600 dark:text-gray-400 flex-1">
+                    {t('mindClerky.nodeSettings.variableTelefoneDescription')}
+                  </span>
+                </div>
+                <div className="flex items-start gap-2">
+                  <code className="text-sm bg-white dark:bg-gray-700 px-2 py-1 rounded font-mono text-blue-600 dark:text-blue-400">
+                    $Idade
+                  </code>
+                  <span className="text-sm text-gray-600 dark:text-gray-400 flex-1">
+                    {t('mindClerky.nodeSettings.variableIdadeDescription')}
+                  </span>
+                </div>
+                <div className="flex items-start gap-2">
+                  <code className="text-sm bg-white dark:bg-gray-700 px-2 py-1 rounded font-mono text-blue-600 dark:text-blue-400">
+                    $submittedAt
+                  </code>
+                  <span className="text-sm text-gray-600 dark:text-gray-400 flex-1">
+                    {t('mindClerky.nodeSettings.variableSubmittedAtDescription')}
+                  </span>
+                </div>
+              </div>
+
+              <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-4 mt-4">
+                <p className="text-sm text-yellow-800 dark:text-yellow-300">
+                  <strong>{t('mindClerky.nodeSettings.note')}:</strong>{' '}
+                  {t('mindClerky.nodeSettings.variablesNote')}
+                </p>
+              </div>
+
+              <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-4 mt-4">
+                <h5 className="font-semibold text-gray-900 dark:text-gray-100 mb-2">
+                  {t('mindClerky.nodeSettings.example')}
+                </h5>
+                <pre className="text-xs bg-white dark:bg-gray-700 p-3 rounded overflow-x-auto">
+                  <code className="text-gray-800 dark:text-gray-200">
+                    {t('mindClerky.nodeSettings.examplePrompt')}
+                  </code>
+                </pre>
+              </div>
+            </div>
+          </div>
+
+          <div className="flex justify-end mt-6">
+            <Button onClick={() => setShowVariablesModal(false)}>
+              {t('common.close')}
+            </Button>
+          </div>
+        </div>
+      </Modal>
     </AppLayout>
   );
 };
@@ -485,9 +577,10 @@ interface NodeSettingsPanelProps {
   instances: Instance[];
   selectedWorkflow: Workflow | null;
   onUpdate: (data: any) => void;
+  onShowVariablesModal: () => void;
 }
 
-const NodeSettingsPanel: React.FC<NodeSettingsPanelProps> = ({ node, instances, selectedWorkflow, onUpdate }) => {
+const NodeSettingsPanel: React.FC<NodeSettingsPanelProps> = ({ node, instances, selectedWorkflow, onUpdate, onShowVariablesModal }) => {
   const { t } = useLanguage();
 
   if (node.type === 'whatsappTrigger') {
@@ -523,9 +616,19 @@ const NodeSettingsPanel: React.FC<NodeSettingsPanelProps> = ({ node, instances, 
     return (
       <div className="space-y-4">
         <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-            {t('mindClerky.nodeSettings.webhookUrl')}
-          </label>
+          <div className="flex items-center gap-2 mb-2">
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+              {t('mindClerky.nodeSettings.webhookUrl')}
+            </label>
+            <button
+              type="button"
+              onClick={onShowVariablesModal}
+              className="w-5 h-5 rounded-full bg-blue-500 text-white text-xs font-bold hover:bg-blue-600 transition-colors flex items-center justify-center"
+              title={t('mindClerky.nodeSettings.variablesHelp')}
+            >
+              ?
+            </button>
+          </div>
           <div className="flex gap-2">
             <Input
               value={webhookUrl}
