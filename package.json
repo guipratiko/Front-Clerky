@@ -18,6 +18,7 @@
     "react-dom": "^18.2.0",
     "react-router-dom": "^6.20.1",
     "react-scripts": "5.0.1",
+    "serve": "^14.2.1",
     "socket.io-client": "^4.8.1",
     "typescript": "^4.9.5",
     "web-vitals": "^2.1.4"
@@ -29,8 +30,11 @@
     "yaml": "^2.8.2"
   },
   "scripts": {
-    "start": "react-scripts start",
+    "start": "node scripts/start.js",
+    "start:dev": "react-scripts start",
+    "start:prod": "serve -s build -l ${PORT:-3000}",
     "build": "GENERATE_SOURCEMAP=false NODE_ENV=production react-scripts build",
+    "serve": "serve -s build -l ${PORT:-3000}",
     "test": "react-scripts test",
     "eject": "react-scripts eject"
   },
