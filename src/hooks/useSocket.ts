@@ -2,7 +2,41 @@ import { useEffect, useRef } from 'react';
 import { io, Socket } from 'socket.io-client';
 import { DispatchStatus } from '../services/api';
 
-const SOCKET_URL = process.env.REACT_APP_SOCKET_URL || 'http://localhost:4331';
+// Normalizar URL do WebSocket (converter HTTP para WS e HTTPS para WSS)
+const getSocketUrl = (): string => {
+  const url = process.env.REACT_APP_SOCKET_URL || 'http://localhost:4331';
+  
+  try {
+    const urlObj = new URL(url);
+    
+    // Se for HTTPS, converter para WSS
+    if (urlObj.protocol === 'https:') {
+      // Remover porta padrão (443) se existir
+      if (urlObj.port === '443' || !urlObj.port) {
+        return `wss://${urlObj.hostname}`;
+      }
+      return `wss://${urlObj.hostname}:${urlObj.port}`;
+    }
+    
+    // Se for HTTP, converter para WS
+    if (urlObj.protocol === 'http:') {
+      // Remover porta padrão (80) se existir
+      if (urlObj.port === '80' || !urlObj.port) {
+        return `ws://${urlObj.hostname}`;
+      }
+      return `ws://${urlObj.hostname}:${urlObj.port}`;
+    }
+    
+    // Se já for ws:// ou wss://, retornar como está
+    return url;
+  } catch (error) {
+    // Se não for uma URL válida, retornar como está
+    console.warn('⚠️ URL do WebSocket inválida:', url);
+    return url;
+  }
+};
+
+const SOCKET_URL = getSocketUrl();
 
 export interface NewMessageData {
   instanceId: string;
