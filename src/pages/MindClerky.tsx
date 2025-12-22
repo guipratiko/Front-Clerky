@@ -540,6 +540,15 @@ const MindClerky: React.FC = () => {
                 </div>
               </div>
 
+              <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg p-4 mt-4">
+                <h4 className="font-semibold text-green-900 dark:text-green-200 mb-2">
+                  {t('mindClerky.nodeSettings.phoneUsageTitle')}
+                </h4>
+                <p className="text-sm text-green-800 dark:text-green-300">
+                  {t('mindClerky.nodeSettings.phoneUsageDescription')}
+                </p>
+              </div>
+
               <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-4 mt-4">
                 <p className="text-sm text-yellow-800 dark:text-yellow-300">
                   <strong>{t('mindClerky.nodeSettings.note')}:</strong>{' '}
