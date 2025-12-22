@@ -16,51 +16,50 @@ export const OpenAINode: React.FC<NodeProps> = ({ data, selected }) => {
 
   return (
     <div
-      className={`bg-gradient-to-br from-emerald-500 to-teal-600 rounded-lg shadow-lg border-2 ${
-        selected ? 'border-emerald-300' : 'border-emerald-700'
+      className={`bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-lg shadow-lg border-2 ${
+        selected ? 'border-emerald-300 ring-2 ring-emerald-200' : 'border-emerald-400'
       } min-w-[200px]`}
     >
-      {/* Handle de entrada (topo) */}
       <Handle
         type="target"
-        position={Position.Top}
-        className="!bg-emerald-400 !border-2 !border-emerald-600 !w-4 !h-4"
-        style={{ top: -8 }}
+        position={Position.Left}
+        className="!w-6 !h-6 bg-emerald-300 !border-3 border-emerald-500"
+        style={{ width: '24px', height: '24px', borderRadius: '50%' }}
       />
-
       <div className="p-4">
         <div className="flex items-center gap-2 mb-2">
-          <span className="text-2xl">🤖</span>
-          <span className="font-semibold text-white text-sm">
+          <div className="w-8 h-8 bg-white/20 rounded-lg flex items-center justify-center text-lg">
+            🤖
+          </div>
+          <h3 className="font-semibold text-white text-sm">
             {t('mindClerky.nodes.openai')}
-          </span>
+          </h3>
         </div>
-        
-        <div className="text-xs text-emerald-100 space-y-1">
+        <div className="space-y-1">
           {hasConfig ? (
             <>
-              <div className="flex items-center gap-1">
-                <span className="opacity-75">Modelo:</span>
-                <span className="font-medium">{model}</span>
-              </div>
-              <div className="opacity-75 truncate">
-                {nodeData.prompt?.substring(0, 30)}...
-              </div>
+              <p className="text-xs text-white/80 font-medium">
+                {model}
+              </p>
+              {nodeData.prompt && (
+                <p className="text-xs text-white/70 truncate">
+                  {nodeData.prompt.substring(0, 30)}
+                  {nodeData.prompt.length > 30 ? '...' : ''}
+                </p>
+              )}
             </>
           ) : (
-            <div className="opacity-75 italic">
+            <p className="text-xs text-white/60 italic">
               {t('mindClerky.nodeSettings.configureOpenAI')}
-            </div>
+            </p>
           )}
         </div>
       </div>
-
-      {/* Handle de saída (base) */}
       <Handle
         type="source"
-        position={Position.Bottom}
-        className="!bg-emerald-400 !border-2 !border-emerald-600 !w-4 !h-4"
-        style={{ bottom: -8 }}
+        position={Position.Right}
+        className="!w-6 !h-6 bg-emerald-300 !border-3 border-emerald-500"
+        style={{ width: '24px', height: '24px', borderRadius: '50%' }}
       />
     </div>
   );
