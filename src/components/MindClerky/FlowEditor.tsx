@@ -13,7 +13,7 @@ import {
   NodeTypes,
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
-import { TriggerNode, ConditionNode, DelayNode, EndNode, ResponseNode, TypebotTriggerNode, SpreadsheetNode } from './NodeTypes';
+import { TriggerNode, ConditionNode, DelayNode, EndNode, ResponseNode, TypebotTriggerNode, SpreadsheetNode, OpenAINode } from './NodeTypes';
 import { WorkflowNode, WorkflowEdge } from '../../services/api';
 
 interface FlowEditorProps {
@@ -33,6 +33,7 @@ const nodeTypes: NodeTypes = {
   end: EndNode as any,
   response: ResponseNode as any,
   spreadsheet: SpreadsheetNode as any,
+  openai: OpenAINode as any,
 };
 
 // Função auxiliar para comparar arrays de nós

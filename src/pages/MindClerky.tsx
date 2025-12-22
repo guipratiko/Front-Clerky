@@ -189,7 +189,7 @@ const MindClerky: React.FC = () => {
   };
 
   // Adicionar nó
-  const handleAddNode = (type: 'whatsappTrigger' | 'typebotTrigger' | 'condition' | 'delay' | 'end' | 'response' | 'spreadsheet') => {
+  const handleAddNode = (type: 'whatsappTrigger' | 'typebotTrigger' | 'condition' | 'delay' | 'end' | 'response' | 'spreadsheet' | 'openai') => {
     const newNode: WorkflowNode = {
       id: `${type}-${Date.now()}`,
       type,
@@ -205,6 +205,8 @@ const MindClerky: React.FC = () => {
           ? { webhookUrl: '', workflowId: selectedWorkflow?.id || '' }
           : type === 'spreadsheet'
           ? { isAuthenticated: false, sheetName: 'Sheet1' }
+          : type === 'openai'
+          ? { apiKey: '', model: 'gpt-3.5-turbo', prompt: '' }
           : {},
     };
     setWorkflowNodes([...workflowNodes, newNode]);
@@ -788,6 +790,67 @@ const NodeSettingsPanel: React.FC<NodeSettingsPanelProps> = ({ node, instances, 
             />
           </div>
         )}
+      </div>
+    );
+  }
+
+  if (node.type === 'openai') {
+    const openaiData = node.data as { apiKey?: string; model?: string; prompt?: string };
+    const models = [
+      'gpt-4',
+      'gpt-4-turbo',
+      'gpt-4-turbo-preview',
+      'gpt-3.5-turbo',
+      'gpt-3.5-turbo-16k',
+    ];
+
+    return (
+      <div className="space-y-4">
+        <div>
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+            {t('mindClerky.nodeSettings.openaiApiKey')}
+          </label>
+          <Input
+            type="password"
+            value={openaiData.apiKey || ''}
+            onChange={(e) => onUpdate({ apiKey: e.target.value })}
+            placeholder={t('mindClerky.nodeSettings.openaiApiKeyPlaceholder')}
+          />
+          <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+            {t('mindClerky.nodeSettings.openaiApiKeyDescription')}
+          </p>
+        </div>
+        <div>
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+            {t('mindClerky.nodeSettings.openaiModel')}
+          </label>
+          <select
+            value={openaiData.model || 'gpt-3.5-turbo'}
+            onChange={(e) => onUpdate({ model: e.target.value })}
+            className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-clerky-backendButton focus:border-transparent bg-white dark:bg-gray-700 text-clerky-backendText dark:text-gray-200"
+          >
+            {models.map((model) => (
+              <option key={model} value={model}>
+                {model}
+              </option>
+            ))}
+          </select>
+        </div>
+        <div>
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+            {t('mindClerky.nodeSettings.openaiPrompt')}
+          </label>
+          <textarea
+            value={openaiData.prompt || ''}
+            onChange={(e) => onUpdate({ prompt: e.target.value })}
+            placeholder={t('mindClerky.nodeSettings.openaiPromptPlaceholder')}
+            rows={6}
+            className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-clerky-backendButton focus:border-transparent bg-white dark:bg-gray-700 text-clerky-backendText dark:text-gray-200 resize-none"
+          />
+          <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+            {t('mindClerky.nodeSettings.openaiPromptDescription')}
+          </p>
+        </div>
       </div>
     );
   }

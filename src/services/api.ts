@@ -663,7 +663,7 @@ export const dispatchAPI = {
 // Workflow Interfaces
 export interface WorkflowNode {
   id: string;
-  type: 'whatsappTrigger' | 'typebotTrigger' | 'condition' | 'delay' | 'end' | 'response' | 'spreadsheet';
+  type: 'whatsappTrigger' | 'typebotTrigger' | 'condition' | 'delay' | 'end' | 'response' | 'spreadsheet' | 'openai';
   position: { x: number; y: number };
   data: {
     instanceId?: string;
@@ -674,6 +674,9 @@ export interface WorkflowNode {
     sheetName?: string;
     authStatus?: 'authenticated' | 'not_authenticated';
     isAuthenticated?: boolean;
+    apiKey?: string;
+    model?: string;
+    prompt?: string;
     conditions?: Array<{ id: string; text: string; outputId: string }>;
     delay?: number;
     delayUnit?: 'seconds' | 'minutes' | 'hours';
