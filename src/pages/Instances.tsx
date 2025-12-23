@@ -5,6 +5,7 @@ import { useLanguage } from '../contexts/LanguageContext';
 import { useAuth } from '../contexts/AuthContext';
 import { instanceAPI, Instance, UpdateInstanceSettingsData } from '../services/api';
 import { useSocket } from '../hooks/useSocket';
+import { getErrorMessage, logError } from '../utils/errorHandler';
 
 const Instances: React.FC = () => {
   const { t } = useLanguage();
@@ -42,8 +43,6 @@ const Instances: React.FC = () => {
 
   // Callback para atualizar status via WebSocket
   const handleStatusUpdate = useCallback((data: { instanceId: string; status: string }) => {
-    console.log('🔄 Atualizando status da instância:', data);
-    
     setInstances((prev) =>
       prev.map((inst) =>
         inst.id === data.instanceId ? { ...inst, status: data.status as Instance['status'] } : inst
@@ -55,7 +54,6 @@ const Instances: React.FC = () => {
       setSelectedInstance((currentInstance) => {
         // Verificar se a instância que conectou é a que está no modal
         if (currentInstance?.id === data.instanceId) {
-          console.log('✅ Instância conectou, fechando modal de QR Code');
           setShowQRModal(false);
           setSuccessMessage(t('instances.connectedSuccess'));
           setTimeout(() => setSuccessMessage(null), 3000);
@@ -75,16 +73,20 @@ const Instances: React.FC = () => {
       const response = await instanceAPI.getAll();
       setInstances(response.instances);
       setError(null);
-    } catch (err: any) {
-      setError(err.message || t('error.getInstancesFailed'));
+    } catch (error: unknown) {
+      logError('Instances.loadInstances', error);
+      const errorMsg = getErrorMessage(error, t('error.getInstancesFailed'));
+      setError(errorMsg);
     } finally {
       setIsLoading(false);
     }
-  }, [t]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   useEffect(() => {
     loadInstances();
-  }, [loadInstances]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // Remover loadInstances das dependências para evitar recarregamentos
 
   const handleCreateInstance = async () => {
     try {
@@ -110,8 +112,10 @@ const Instances: React.FC = () => {
       }
 
       setTimeout(() => setSuccessMessage(null), 3000);
-    } catch (err: any) {
-      setError(err.message || t('error.createInstanceFailed'));
+    } catch (error: unknown) {
+      logError('Instances.createInstance', error);
+      const errorMsg = getErrorMessage(error, t('error.createInstanceFailed'));
+      setError(errorMsg);
     } finally {
       setIsCreating(false);
     }
@@ -128,8 +132,10 @@ const Instances: React.FC = () => {
       setShowSettingsModal(false);
       setSuccessMessage(t('instances.settingsUpdated'));
       setTimeout(() => setSuccessMessage(null), 3000);
-    } catch (err: any) {
-      setError(err.message || t('error.updateSettingsFailed'));
+    } catch (error: unknown) {
+      logError('Instances.updateSettings', error);
+      const errorMsg = getErrorMessage(error, t('error.updateSettingsFailed'));
+      setError(errorMsg);
     } finally {
       setIsUpdating(false);
     }
@@ -145,8 +151,10 @@ const Instances: React.FC = () => {
       setInstances(instances.filter((inst) => inst.id !== id));
       setSuccessMessage(t('instances.deleteSuccess'));
       setTimeout(() => setSuccessMessage(null), 3000);
-    } catch (err: any) {
-      setError(err.message || t('error.deleteInstanceFailed'));
+    } catch (error: unknown) {
+      logError('Instances.deleteInstance', error);
+      const errorMsg = getErrorMessage(error, t('error.deleteInstanceFailed'));
+      setError(errorMsg);
     }
   };
 

@@ -2,13 +2,16 @@ import React, { useState, useEffect } from 'react';
 import { AppLayout } from '../components/Layout';
 import { Card } from '../components/UI';
 import { useAuth } from '../contexts/AuthContext';
+import { useLanguage } from '../contexts/LanguageContext';
 import { instanceAPI, Instance } from '../services/api';
+import { logError } from '../utils/errorHandler';
 
 // URL base da API externa (sempre usa a URL de produção na documentação)
 const API_BASE_URL = 'https://back.clerky.com.br';
 
 const Documentation: React.FC = () => {
   const { token } = useAuth();
+  const { t } = useLanguage();
   const [instances, setInstances] = useState<Instance[]>([]);
   const [selectedInstance, setSelectedInstance] = useState<Instance | null>(null);
   const [copiedCode, setCopiedCode] = useState<string | null>(null);
@@ -21,8 +24,8 @@ const Documentation: React.FC = () => {
         if (response.instances.length > 0) {
           setSelectedInstance(response.instances[0]);
         }
-      } catch (error) {
-        console.error('Erro ao carregar instâncias:', error);
+      } catch (error: unknown) {
+        logError('Documentation.loadInstances', error);
       }
     };
 
@@ -47,7 +50,7 @@ const Documentation: React.FC = () => {
         <button
           onClick={() => copyToClipboard(code, codeId)}
           className="absolute top-2 right-2 p-2 bg-gray-700 hover:bg-gray-600 rounded text-xs text-white transition-colors"
-          title="Copiar código"
+          title={t('documentation.copyCode')}
         >
           {copiedCode === codeId ? '✓' : '📋'}
         </button>
@@ -60,10 +63,10 @@ const Documentation: React.FC = () => {
       <div className="animate-fadeIn max-w-6xl mx-auto">
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-clerky-backendText dark:text-gray-200 mb-2">
-            Documentação da API Externa
+            {t('documentation.title')}
           </h1>
           <p className="text-gray-600 dark:text-gray-400">
-            Integre sua aplicação com o Clerky usando nossa API REST. Envie mensagens, gerencie contatos e muito mais.
+            {t('documentation.subtitle')}
           </p>
         </div>
 
@@ -71,7 +74,7 @@ const Documentation: React.FC = () => {
         {instances.length > 0 && (
           <Card padding="lg" shadow="lg" className="mb-6">
             <label className="block text-sm font-medium text-clerky-backendText dark:text-gray-200 mb-2">
-              Selecione uma instância para ver o token:
+              {t('documentation.selectInstance')}
             </label>
             <select
               value={selectedInstance?.id || ''}
@@ -91,7 +94,7 @@ const Documentation: React.FC = () => {
               <div className="mt-4 p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm text-gray-600 dark:text-gray-400">Token da API:</p>
+                    <p className="text-sm text-gray-600 dark:text-gray-400">{t('documentation.apiToken')}</p>
                     <code className="text-lg font-mono text-clerky-backendButton dark:text-blue-400">
                       {selectedInstance.token}
                     </code>
@@ -99,7 +102,7 @@ const Documentation: React.FC = () => {
                   <button
                     onClick={() => copyToClipboard(selectedInstance.token!, 'token')}
                     className="p-2 bg-clerky-backendButton hover:bg-clerky-backendButtonHover text-white rounded transition-colors"
-                    title="Copiar token"
+                    title={t('documentation.copyToken')}
                   >
                     {copiedCode === 'token' ? '✓' : '📋'}
                   </button>
@@ -112,10 +115,10 @@ const Documentation: React.FC = () => {
         {/* Autenticação */}
         <Card padding="lg" shadow="lg" className="mb-6">
           <h2 className="text-2xl font-semibold text-clerky-backendText dark:text-gray-200 mb-4">
-            🔐 Autenticação
+            🔐 {t('documentation.authentication')}
           </h2>
           <p className="text-gray-600 dark:text-gray-400 mb-4">
-            Todas as requisições devem incluir o token de autenticação no header <code className="bg-gray-100 dark:bg-gray-800 px-2 py-1 rounded">Authorization</code>.
+            {t('documentation.authDescription')} <code className="bg-gray-100 dark:bg-gray-800 px-2 py-1 rounded">Authorization</code>.
           </p>
           <CodeBlock
             code={`Authorization: Bearer SEU_TOKEN_AQUI`}
@@ -123,14 +126,14 @@ const Documentation: React.FC = () => {
             id="auth-header"
           />
           <p className="text-sm text-gray-500 dark:text-gray-500 mt-2">
-            O token é único para cada instância e pode ser encontrado no card da instância na página de Gerenciador de Conexões.
+            {t('documentation.authNote')}
           </p>
         </Card>
 
         {/* Base URL */}
         <Card padding="lg" shadow="lg" className="mb-6">
           <h2 className="text-2xl font-semibold text-clerky-backendText dark:text-gray-200 mb-4">
-            🌐 URL Base
+            🌐 {t('documentation.baseUrl')}
           </h2>
           <CodeBlock code={`${API_BASE_URL}/api/v1/webhook`} language="text" id="base-url" />
         </Card>
@@ -138,25 +141,25 @@ const Documentation: React.FC = () => {
         {/* Envio de Mensagens */}
         <Card padding="lg" shadow="lg" className="mb-6">
           <h2 className="text-2xl font-semibold text-clerky-backendText dark:text-gray-200 mb-4">
-            💬 Envio de Mensagens
+            💬 {t('documentation.sendMessages')}
           </h2>
 
           {/* Enviar Texto */}
           <div className="mb-6">
             <h3 className="text-xl font-semibold text-clerky-backendText dark:text-gray-200 mb-3">
-              Enviar Mensagem de Texto
+              {t('documentation.sendText')}
             </h3>
             <p className="text-gray-600 dark:text-gray-400 mb-3">
               <code className="bg-gray-100 dark:bg-gray-800 px-2 py-1 rounded">POST /send-text</code>
             </p>
             <p className="text-sm text-gray-500 dark:text-gray-500 mb-3">
-              Envia uma mensagem de texto para um contato.
+              {t('documentation.sendTextDescription')}
             </p>
             <div className="mb-3">
-              <p className="text-sm font-medium text-clerky-backendText dark:text-gray-200 mb-2">Parâmetros:</p>
+              <p className="text-sm font-medium text-clerky-backendText dark:text-gray-200 mb-2">{t('documentation.parameters')}</p>
               <ul className="list-disc list-inside text-sm text-gray-600 dark:text-gray-400 space-y-1 ml-4">
-                <li><code className="bg-gray-100 dark:bg-gray-800 px-1 py-0.5 rounded">phone</code> (string, obrigatório) - Número do telefone (ex: "5511999999999")</li>
-                <li><code className="bg-gray-100 dark:bg-gray-800 px-1 py-0.5 rounded">text</code> (string, obrigatório) - Texto da mensagem</li>
+                <li><code className="bg-gray-100 dark:bg-gray-800 px-1 py-0.5 rounded">phone</code> {t('documentation.phoneParam')} {t('documentation.phoneExample')}</li>
+                <li><code className="bg-gray-100 dark:bg-gray-800 px-1 py-0.5 rounded">text</code> {t('documentation.textParam')}</li>
               </ul>
             </div>
             <CodeBlock
@@ -175,20 +178,20 @@ const Documentation: React.FC = () => {
           {/* Enviar Imagem */}
           <div className="mb-6">
             <h3 className="text-xl font-semibold text-clerky-backendText dark:text-gray-200 mb-3">
-              Enviar Imagem
+              {t('documentation.sendImage')}
             </h3>
             <p className="text-gray-600 dark:text-gray-400 mb-3">
               <code className="bg-gray-100 dark:bg-gray-800 px-2 py-1 rounded">POST /send-image</code>
             </p>
             <p className="text-sm text-gray-500 dark:text-gray-500 mb-3">
-              Envia uma imagem com legenda opcional para um contato.
+              {t('documentation.sendImageDescription')}
             </p>
             <div className="mb-3">
-              <p className="text-sm font-medium text-clerky-backendText dark:text-gray-200 mb-2">Parâmetros:</p>
+              <p className="text-sm font-medium text-clerky-backendText dark:text-gray-200 mb-2">{t('documentation.parameters')}</p>
               <ul className="list-disc list-inside text-sm text-gray-600 dark:text-gray-400 space-y-1 ml-4">
-                <li><code className="bg-gray-100 dark:bg-gray-800 px-1 py-0.5 rounded">phone</code> (string, obrigatório) - Número do telefone</li>
-                <li><code className="bg-gray-100 dark:bg-gray-800 px-1 py-0.5 rounded">image</code> (string, obrigatório) - URL pública da imagem</li>
-                <li><code className="bg-gray-100 dark:bg-gray-800 px-1 py-0.5 rounded">caption</code> (string, opcional) - Legenda da imagem</li>
+                <li><code className="bg-gray-100 dark:bg-gray-800 px-1 py-0.5 rounded">phone</code> {t('documentation.phoneParam')}</li>
+                <li><code className="bg-gray-100 dark:bg-gray-800 px-1 py-0.5 rounded">image</code> {t('documentation.imageParam')}</li>
+                <li><code className="bg-gray-100 dark:bg-gray-800 px-1 py-0.5 rounded">caption</code> {t('documentation.captionParam')}</li>
               </ul>
             </div>
             <CodeBlock
@@ -208,20 +211,20 @@ const Documentation: React.FC = () => {
           {/* Enviar Vídeo */}
           <div className="mb-6">
             <h3 className="text-xl font-semibold text-clerky-backendText dark:text-gray-200 mb-3">
-              Enviar Vídeo
+              {t('documentation.sendVideo')}
             </h3>
             <p className="text-gray-600 dark:text-gray-400 mb-3">
               <code className="bg-gray-100 dark:bg-gray-800 px-2 py-1 rounded">POST /send-video</code>
             </p>
             <p className="text-sm text-gray-500 dark:text-gray-500 mb-3">
-              Envia um vídeo com legenda opcional para um contato.
+              {t('documentation.sendVideoDescription')}
             </p>
             <div className="mb-3">
-              <p className="text-sm font-medium text-clerky-backendText dark:text-gray-200 mb-2">Parâmetros:</p>
+              <p className="text-sm font-medium text-clerky-backendText dark:text-gray-200 mb-2">{t('documentation.parameters')}</p>
               <ul className="list-disc list-inside text-sm text-gray-600 dark:text-gray-400 space-y-1 ml-4">
-                <li><code className="bg-gray-100 dark:bg-gray-800 px-1 py-0.5 rounded">phone</code> (string, obrigatório) - Número do telefone</li>
-                <li><code className="bg-gray-100 dark:bg-gray-800 px-1 py-0.5 rounded">video</code> (string, obrigatório) - URL pública do vídeo</li>
-                <li><code className="bg-gray-100 dark:bg-gray-800 px-1 py-0.5 rounded">caption</code> (string, opcional) - Legenda do vídeo</li>
+                <li><code className="bg-gray-100 dark:bg-gray-800 px-1 py-0.5 rounded">phone</code> {t('documentation.phoneParam')}</li>
+                <li><code className="bg-gray-100 dark:bg-gray-800 px-1 py-0.5 rounded">video</code> {t('documentation.videoParam')}</li>
+                <li><code className="bg-gray-100 dark:bg-gray-800 px-1 py-0.5 rounded">caption</code> {t('documentation.videoCaptionParam')}</li>
               </ul>
             </div>
             <CodeBlock
@@ -241,21 +244,21 @@ const Documentation: React.FC = () => {
           {/* Enviar Arquivo */}
           <div className="mb-6">
             <h3 className="text-xl font-semibold text-clerky-backendText dark:text-gray-200 mb-3">
-              Enviar Arquivo
+              {t('documentation.sendFile')}
             </h3>
             <p className="text-gray-600 dark:text-gray-400 mb-3">
               <code className="bg-gray-100 dark:bg-gray-800 px-2 py-1 rounded">POST /send-file</code>
             </p>
             <p className="text-sm text-gray-500 dark:text-gray-500 mb-3">
-              Envia um arquivo genérico (PDF, DOC, etc.) para um contato.
+              {t('documentation.sendFileDescription')}
             </p>
             <div className="mb-3">
-              <p className="text-sm font-medium text-clerky-backendText dark:text-gray-200 mb-2">Parâmetros:</p>
+              <p className="text-sm font-medium text-clerky-backendText dark:text-gray-200 mb-2">{t('documentation.parameters')}</p>
               <ul className="list-disc list-inside text-sm text-gray-600 dark:text-gray-400 space-y-1 ml-4">
-                <li><code className="bg-gray-100 dark:bg-gray-800 px-1 py-0.5 rounded">phone</code> (string, obrigatório) - Número do telefone</li>
-                <li><code className="bg-gray-100 dark:bg-gray-800 px-1 py-0.5 rounded">file</code> (string, obrigatório) - URL pública do arquivo</li>
-                <li><code className="bg-gray-100 dark:bg-gray-800 px-1 py-0.5 rounded">filename</code> (string, obrigatório) - Nome do arquivo</li>
-                <li><code className="bg-gray-100 dark:bg-gray-800 px-1 py-0.5 rounded">mimetype</code> (string, opcional) - Tipo MIME do arquivo</li>
+                <li><code className="bg-gray-100 dark:bg-gray-800 px-1 py-0.5 rounded">phone</code> {t('documentation.phoneParam')}</li>
+                <li><code className="bg-gray-100 dark:bg-gray-800 px-1 py-0.5 rounded">file</code> {t('documentation.fileParam')}</li>
+                <li><code className="bg-gray-100 dark:bg-gray-800 px-1 py-0.5 rounded">filename</code> {t('documentation.filenameParam')}</li>
+                <li><code className="bg-gray-100 dark:bg-gray-800 px-1 py-0.5 rounded">mimetype</code> {t('documentation.mimetypeParam')}</li>
               </ul>
             </div>
             <CodeBlock
@@ -276,19 +279,19 @@ const Documentation: React.FC = () => {
           {/* Enviar Áudio */}
           <div className="mb-6">
             <h3 className="text-xl font-semibold text-clerky-backendText dark:text-gray-200 mb-3">
-              Enviar Áudio
+              {t('documentation.sendAudio')}
             </h3>
             <p className="text-gray-600 dark:text-gray-400 mb-3">
               <code className="bg-gray-100 dark:bg-gray-800 px-2 py-1 rounded">POST /send-audio</code>
             </p>
             <p className="text-sm text-gray-500 dark:text-gray-500 mb-3">
-              Envia um áudio para um contato.
+              {t('documentation.sendAudioDescription')}
             </p>
             <div className="mb-3">
-              <p className="text-sm font-medium text-clerky-backendText dark:text-gray-200 mb-2">Parâmetros:</p>
+              <p className="text-sm font-medium text-clerky-backendText dark:text-gray-200 mb-2">{t('documentation.parameters')}</p>
               <ul className="list-disc list-inside text-sm text-gray-600 dark:text-gray-400 space-y-1 ml-4">
-                <li><code className="bg-gray-100 dark:bg-gray-800 px-1 py-0.5 rounded">phone</code> (string, obrigatório) - Número do telefone</li>
-                <li><code className="bg-gray-100 dark:bg-gray-800 px-1 py-0.5 rounded">audio</code> (string, obrigatório) - URL pública do áudio</li>
+                <li><code className="bg-gray-100 dark:bg-gray-800 px-1 py-0.5 rounded">phone</code> {t('documentation.phoneParam')}</li>
+                <li><code className="bg-gray-100 dark:bg-gray-800 px-1 py-0.5 rounded">audio</code> {t('documentation.audioParam')}</li>
               </ul>
             </div>
             <CodeBlock
@@ -308,28 +311,28 @@ const Documentation: React.FC = () => {
         {/* CRM */}
         <Card padding="lg" shadow="lg" className="mb-6">
           <h2 className="text-2xl font-semibold text-clerky-backendText dark:text-gray-200 mb-4">
-            📋 Gerenciamento de CRM
+            📋 {t('documentation.crmManagement')}
           </h2>
 
           {/* Mover Contato */}
           <div className="mb-6">
             <h3 className="text-xl font-semibold text-clerky-backendText dark:text-gray-200 mb-3">
-              Mover Contato entre Colunas
+              {t('documentation.moveContact')}
             </h3>
             <p className="text-gray-600 dark:text-gray-400 mb-3">
               <code className="bg-gray-100 dark:bg-gray-800 px-2 py-1 rounded">POST /move-contact</code>
             </p>
             <p className="text-sm text-gray-500 dark:text-gray-500 mb-3">
-              Move um contato de uma coluna para outra no Kanban.
+              {t('documentation.moveContactDescription')}
             </p>
             <div className="mb-3">
-              <p className="text-sm font-medium text-clerky-backendText dark:text-gray-200 mb-2">Parâmetros:</p>
+              <p className="text-sm font-medium text-clerky-backendText dark:text-gray-200 mb-2">{t('documentation.parameters')}</p>
               <ul className="list-disc list-inside text-sm text-gray-600 dark:text-gray-400 space-y-1 ml-4">
-                <li><code className="bg-gray-100 dark:bg-gray-800 px-1 py-0.5 rounded">phone</code> (string, obrigatório) - Número do telefone</li>
-                <li><code className="bg-gray-100 dark:bg-gray-800 px-1 py-0.5 rounded">columnId</code> (string, obrigatório) - ID da coluna (pode ser <strong>short_id</strong> 1-5 ou UUID)</li>
+                <li><code className="bg-gray-100 dark:bg-gray-800 px-1 py-0.5 rounded">phone</code> {t('documentation.phoneParam')}</li>
+                <li><code className="bg-gray-100 dark:bg-gray-800 px-1 py-0.5 rounded">columnId</code> {t('documentation.columnIdParam')}</li>
               </ul>
               <p className="text-xs text-gray-500 dark:text-gray-500 mt-2 ml-4">
-                💡 <strong>Dica:</strong> Use o <strong>short_id</strong> (1, 2, 3, 4, 5) para facilitar. Veja as colunas disponíveis em <code className="bg-gray-100 dark:bg-gray-800 px-1 py-0.5 rounded">GET /columns</code>
+                💡 <strong>{t('documentation.tipShortId')}</strong> <code className="bg-gray-100 dark:bg-gray-800 px-1 py-0.5 rounded">GET /columns</code>
               </p>
             </div>
             <CodeBlock
@@ -348,13 +351,13 @@ const Documentation: React.FC = () => {
           {/* Listar Contatos */}
           <div className="mb-6">
             <h3 className="text-xl font-semibold text-clerky-backendText dark:text-gray-200 mb-3">
-              Listar Contatos
+              {t('documentation.listContacts')}
             </h3>
             <p className="text-gray-600 dark:text-gray-400 mb-3">
               <code className="bg-gray-100 dark:bg-gray-800 px-2 py-1 rounded">GET /contacts</code>
             </p>
             <p className="text-sm text-gray-500 dark:text-gray-500 mb-3">
-              Retorna todos os contatos da instância.
+              {t('documentation.listContactsDescription')}
             </p>
             <CodeBlock
               code={`curl -X GET ${API_BASE_URL}/api/v1/webhook/contacts \\
@@ -364,7 +367,7 @@ const Documentation: React.FC = () => {
               id="get-contacts"
             />
             <div className="mt-3 p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
-              <p className="text-sm font-medium text-clerky-backendText dark:text-gray-200 mb-2">Resposta de exemplo:</p>
+              <p className="text-sm font-medium text-clerky-backendText dark:text-gray-200 mb-2">{t('documentation.exampleResponse')}</p>
               <pre className="text-xs text-gray-600 dark:text-gray-400 overflow-x-auto">
 {`{
   "status": "success",
@@ -389,13 +392,13 @@ const Documentation: React.FC = () => {
           {/* Listar Colunas */}
           <div className="mb-6">
             <h3 className="text-xl font-semibold text-clerky-backendText dark:text-gray-200 mb-3">
-              Listar Colunas do Kanban
+              {t('documentation.listColumns')}
             </h3>
             <p className="text-gray-600 dark:text-gray-400 mb-3">
               <code className="bg-gray-100 dark:bg-gray-800 px-2 py-1 rounded">GET /columns</code>
             </p>
             <p className="text-sm text-gray-500 dark:text-gray-500 mb-3">
-              Retorna todas as colunas do Kanban com seus IDs e short_ids.
+              {t('documentation.listColumnsDescription')}
             </p>
             <CodeBlock
               code={`curl -X GET ${API_BASE_URL}/api/v1/webhook/columns \\
@@ -405,7 +408,7 @@ const Documentation: React.FC = () => {
               id="get-columns"
             />
             <div className="mt-3 p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
-              <p className="text-sm font-medium text-clerky-backendText dark:text-gray-200 mb-2">Resposta de exemplo:</p>
+              <p className="text-sm font-medium text-clerky-backendText dark:text-gray-200 mb-2">{t('documentation.exampleResponse')}</p>
               <pre className="text-xs text-gray-600 dark:text-gray-400 overflow-x-auto">
 {`{
   "status": "success",
@@ -449,7 +452,7 @@ const Documentation: React.FC = () => {
 }`}
               </pre>
               <p className="text-xs text-gray-500 dark:text-gray-500 mt-2">
-                💡 Use o <strong>shortId</strong> (1-5) no parâmetro <code className="bg-gray-100 dark:bg-gray-800 px-1 py-0.5 rounded">columnId</code> para facilitar!
+                💡 {t('documentation.tipUseShortId')}
               </p>
             </div>
           </div>
@@ -457,13 +460,13 @@ const Documentation: React.FC = () => {
           {/* Listar Labels */}
           <div className="mb-6">
             <h3 className="text-xl font-semibold text-clerky-backendText dark:text-gray-200 mb-3">
-              Listar Labels (Etiquetas)
+              {t('documentation.listLabels')}
             </h3>
             <p className="text-gray-600 dark:text-gray-400 mb-3">
               <code className="bg-gray-100 dark:bg-gray-800 px-2 py-1 rounded">GET /labels</code>
             </p>
             <p className="text-sm text-gray-500 dark:text-gray-500 mb-3">
-              Retorna todas as labels (etiquetas) disponíveis para categorizar contatos.
+              {t('documentation.listLabelsDescription')}
             </p>
             <CodeBlock
               code={`curl -X GET ${API_BASE_URL}/api/v1/webhook/labels \\
@@ -473,7 +476,7 @@ const Documentation: React.FC = () => {
               id="get-labels"
             />
             <div className="mt-3 p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
-              <p className="text-sm font-medium text-clerky-backendText dark:text-gray-200 mb-2">Resposta de exemplo:</p>
+              <p className="text-sm font-medium text-clerky-backendText dark:text-gray-200 mb-2">{t('documentation.exampleResponse')}</p>
               <pre className="text-xs text-gray-600 dark:text-gray-400 overflow-x-auto">
 {`{
   "status": "success",
@@ -501,22 +504,22 @@ const Documentation: React.FC = () => {
           {/* Adicionar Label a um Contato */}
           <div className="mb-6">
             <h3 className="text-xl font-semibold text-clerky-backendText dark:text-gray-200 mb-3">
-              Adicionar Label a um Contato
+              {t('documentation.addLabel')}
             </h3>
             <p className="text-gray-600 dark:text-gray-400 mb-3">
               <code className="bg-gray-100 dark:bg-gray-800 px-2 py-1 rounded">POST /add-label</code>
             </p>
             <p className="text-sm text-gray-500 dark:text-gray-500 mb-3">
-              Adiciona uma label (etiqueta) a um contato para categorizá-lo.
+              {t('documentation.addLabelDescription')}
             </p>
             <div className="mb-3">
-              <p className="text-sm font-medium text-clerky-backendText dark:text-gray-200 mb-2">Parâmetros:</p>
+              <p className="text-sm font-medium text-clerky-backendText dark:text-gray-200 mb-2">{t('documentation.parameters')}</p>
               <ul className="list-disc list-inside text-sm text-gray-600 dark:text-gray-400 space-y-1 ml-4">
-                <li><code className="bg-gray-100 dark:bg-gray-800 px-1 py-0.5 rounded">phone</code> (string, obrigatório) - Número do telefone</li>
-                <li><code className="bg-gray-100 dark:bg-gray-800 px-1 py-0.5 rounded">labelId</code> (string, obrigatório) - ID da label (pode ser <strong>short_id</strong> 1-5 ou UUID)</li>
+                <li><code className="bg-gray-100 dark:bg-gray-800 px-1 py-0.5 rounded">phone</code> {t('documentation.phoneParam')}</li>
+                <li><code className="bg-gray-100 dark:bg-gray-800 px-1 py-0.5 rounded">labelId</code> {t('documentation.labelIdParam')}</li>
               </ul>
               <p className="text-xs text-gray-500 dark:text-gray-500 mt-2 ml-4">
-                💡 <strong>Dica:</strong> Use o <strong>short_id</strong> (1, 2, 3, 4, 5) para facilitar. Veja as labels disponíveis em <code className="bg-gray-100 dark:bg-gray-800 px-1 py-0.5 rounded">GET /labels</code>
+                💡 <strong>{t('documentation.tipShortId')}</strong> <code className="bg-gray-100 dark:bg-gray-800 px-1 py-0.5 rounded">GET /labels</code>
               </p>
             </div>
             <CodeBlock
@@ -531,7 +534,7 @@ const Documentation: React.FC = () => {
               id="add-label"
             />
             <div className="mt-3 p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
-              <p className="text-sm font-medium text-clerky-backendText dark:text-gray-200 mb-2">Resposta de exemplo:</p>
+              <p className="text-sm font-medium text-clerky-backendText dark:text-gray-200 mb-2">{t('documentation.exampleResponse')}</p>
               <pre className="text-xs text-gray-600 dark:text-gray-400 overflow-x-auto">
 {`{
   "status": "success",
@@ -549,22 +552,22 @@ const Documentation: React.FC = () => {
           {/* Remover Label de um Contato */}
           <div className="mb-6">
             <h3 className="text-xl font-semibold text-clerky-backendText dark:text-gray-200 mb-3">
-              Remover Label de um Contato
+              {t('documentation.removeLabel')}
             </h3>
             <p className="text-gray-600 dark:text-gray-400 mb-3">
               <code className="bg-gray-100 dark:bg-gray-800 px-2 py-1 rounded">POST /remove-label</code>
             </p>
             <p className="text-sm text-gray-500 dark:text-gray-500 mb-3">
-              Remove uma label (etiqueta) de um contato.
+              {t('documentation.removeLabelDescription')}
             </p>
             <div className="mb-3">
-              <p className="text-sm font-medium text-clerky-backendText dark:text-gray-200 mb-2">Parâmetros:</p>
+              <p className="text-sm font-medium text-clerky-backendText dark:text-gray-200 mb-2">{t('documentation.parameters')}</p>
               <ul className="list-disc list-inside text-sm text-gray-600 dark:text-gray-400 space-y-1 ml-4">
-                <li><code className="bg-gray-100 dark:bg-gray-800 px-1 py-0.5 rounded">phone</code> (string, obrigatório) - Número do telefone</li>
-                <li><code className="bg-gray-100 dark:bg-gray-800 px-1 py-0.5 rounded">labelId</code> (string, obrigatório) - ID da label (pode ser <strong>short_id</strong> 1-5 ou UUID)</li>
+                <li><code className="bg-gray-100 dark:bg-gray-800 px-1 py-0.5 rounded">phone</code> {t('documentation.phoneParam')}</li>
+                <li><code className="bg-gray-100 dark:bg-gray-800 px-1 py-0.5 rounded">labelId</code> {t('documentation.labelIdParam')}</li>
               </ul>
               <p className="text-xs text-gray-500 dark:text-gray-500 mt-2 ml-4">
-                💡 <strong>Dica:</strong> Use o <strong>short_id</strong> (1, 2, 3, 4, 5) para facilitar. Veja as labels disponíveis em <code className="bg-gray-100 dark:bg-gray-800 px-1 py-0.5 rounded">GET /labels</code>
+                💡 <strong>{t('documentation.tipShortId')}</strong> <code className="bg-gray-100 dark:bg-gray-800 px-1 py-0.5 rounded">GET /labels</code>
               </p>
             </div>
             <CodeBlock
@@ -579,7 +582,7 @@ const Documentation: React.FC = () => {
               id="remove-label"
             />
             <div className="mt-3 p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
-              <p className="text-sm font-medium text-clerky-backendText dark:text-gray-200 mb-2">Resposta de exemplo:</p>
+              <p className="text-sm font-medium text-clerky-backendText dark:text-gray-200 mb-2">{t('documentation.exampleResponse')}</p>
               <pre className="text-xs text-gray-600 dark:text-gray-400 overflow-x-auto">
 {`{
   "status": "success",
@@ -598,12 +601,12 @@ const Documentation: React.FC = () => {
         {/* Respostas e Erros */}
         <Card padding="lg" shadow="lg" className="mb-6">
           <h2 className="text-2xl font-semibold text-clerky-backendText dark:text-gray-200 mb-4">
-            📤 Respostas da API
+            📤 {t('documentation.apiResponses')}
           </h2>
 
           <div className="mb-4">
             <h3 className="text-lg font-semibold text-clerky-backendText dark:text-gray-200 mb-2">
-              Resposta de Sucesso
+              {t('documentation.successResponse')}
             </h3>
             <div className="p-3 bg-green-50 dark:bg-green-900/20 rounded-lg">
               <pre className="text-xs text-green-700 dark:text-green-400 overflow-x-auto">
@@ -622,7 +625,7 @@ const Documentation: React.FC = () => {
 
           <div className="mb-4">
             <h3 className="text-lg font-semibold text-clerky-backendText dark:text-gray-200 mb-2">
-              Resposta de Erro
+              {t('documentation.errorResponse')}
             </h3>
             <div className="p-3 bg-red-50 dark:bg-red-900/20 rounded-lg">
               <pre className="text-xs text-red-700 dark:text-red-400 overflow-x-auto">
@@ -637,14 +640,14 @@ const Documentation: React.FC = () => {
 
           <div className="mt-4">
             <h3 className="text-lg font-semibold text-clerky-backendText dark:text-gray-200 mb-2">
-              Códigos de Status HTTP
+              {t('documentation.httpStatusCodes')}
             </h3>
             <ul className="list-disc list-inside text-sm text-gray-600 dark:text-gray-400 space-y-1 ml-4">
-              <li><code className="bg-gray-100 dark:bg-gray-800 px-1 py-0.5 rounded">200</code> - Sucesso</li>
-              <li><code className="bg-gray-100 dark:bg-gray-800 px-1 py-0.5 rounded">400</code> - Erro de validação (campos obrigatórios faltando)</li>
-              <li><code className="bg-gray-100 dark:bg-gray-800 px-1 py-0.5 rounded">401</code> - Token inválido ou não fornecido</li>
-              <li><code className="bg-gray-100 dark:bg-gray-800 px-1 py-0.5 rounded">404</code> - Recurso não encontrado (contato, coluna, etc.)</li>
-              <li><code className="bg-gray-100 dark:bg-gray-800 px-1 py-0.5 rounded">500</code> - Erro interno do servidor</li>
+              <li><code className="bg-gray-100 dark:bg-gray-800 px-1 py-0.5 rounded">200</code> - {t('documentation.status200')}</li>
+              <li><code className="bg-gray-100 dark:bg-gray-800 px-1 py-0.5 rounded">400</code> - {t('documentation.status400')}</li>
+              <li><code className="bg-gray-100 dark:bg-gray-800 px-1 py-0.5 rounded">401</code> - {t('documentation.status401')}</li>
+              <li><code className="bg-gray-100 dark:bg-gray-800 px-1 py-0.5 rounded">404</code> - {t('documentation.status404')}</li>
+              <li><code className="bg-gray-100 dark:bg-gray-800 px-1 py-0.5 rounded">500</code> - {t('documentation.status500')}</li>
             </ul>
           </div>
         </Card>
@@ -652,26 +655,26 @@ const Documentation: React.FC = () => {
         {/* Informações Importantes */}
         <Card padding="lg" shadow="lg" className="mb-6">
           <h2 className="text-2xl font-semibold text-clerky-backendText dark:text-gray-200 mb-4">
-            ⚠️ Informações Importantes
+            ⚠️ {t('documentation.importantInfo')}
           </h2>
           <ul className="list-disc list-inside text-sm text-gray-600 dark:text-gray-400 space-y-2 ml-4">
             <li>
-              <strong>Formato do Telefone:</strong> Use apenas números, incluindo código do país (ex: "5511999999999" para Brasil)
+              <strong>{t('documentation.phoneFormat')}</strong> {t('documentation.phoneFormatDesc')}
             </li>
             <li>
-              <strong>URLs de Mídia:</strong> Todas as URLs de mídia (imagem, vídeo, arquivo, áudio) devem ser públicas e acessíveis
+              <strong>{t('documentation.mediaUrls')}</strong> {t('documentation.mediaUrlsDesc')}
             </li>
             <li>
-              <strong>Short ID das Colunas:</strong> Use os valores 1, 2, 3, 4, 5 ao invés de UUIDs longos para facilitar
+              <strong>{t('documentation.shortIdColumns')}</strong> {t('documentation.shortIdColumnsDesc')}
             </li>
             <li>
-              <strong>Short ID das Labels:</strong> Use os valores 1, 2, 3, 4, 5 ao invés de UUIDs longos para facilitar
+              <strong>{t('documentation.shortIdLabels')}</strong> {t('documentation.shortIdLabelsDesc')}
             </li>
             <li>
-              <strong>Token:</strong> O token é único por instância e permanente até a instância ser deletada
+              <strong>{t('documentation.tokenInfo')}</strong> {t('documentation.tokenInfoDesc')}
             </li>
             <li>
-              <strong>Atualizações em Tempo Real:</strong> Mudanças feitas via API são refletidas automaticamente no frontend via WebSocket
+              <strong>{t('documentation.realTimeUpdates')}</strong> {t('documentation.realTimeUpdatesDesc')}
             </li>
           </ul>
         </Card>
@@ -679,7 +682,7 @@ const Documentation: React.FC = () => {
         {/* Exemplo Completo */}
         <Card padding="lg" shadow="lg" className="mb-6">
           <h2 className="text-2xl font-semibold text-clerky-backendText dark:text-gray-200 mb-4">
-            📝 Exemplo Completo (JavaScript)
+            📝 {t('documentation.completeExample')}
           </h2>
           <CodeBlock
             code={`// Exemplo de uso da API em JavaScript/Node.js

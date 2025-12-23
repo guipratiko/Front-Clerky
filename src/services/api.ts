@@ -1,3 +1,5 @@
+import type { AssistedConfig } from '../types/aiAgent';
+
 const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:4331/api';
 
 export interface LoginData {
@@ -685,6 +687,7 @@ export interface WorkflowNode {
     mediaUrl?: string;
     caption?: string;
     fileName?: string;
+    responseInstanceId?: string; // Instância de onde enviar a resposta (diferente do instanceId do trigger)
   };
 }
 
@@ -779,6 +782,9 @@ export interface AIAgent {
   prompt: string;
   waitTime: number;
   isActive: boolean;
+  transcribeAudio: boolean;
+  agentType: 'manual' | 'assisted';
+  assistedConfig?: AssistedConfig;
   createdAt: string;
   updatedAt: string;
 }
@@ -786,9 +792,12 @@ export interface AIAgent {
 export interface CreateAIAgentData {
   instanceId: string;
   name: string;
-  prompt: string;
+  prompt?: string;
   waitTime?: number;
   isActive?: boolean;
+  transcribeAudio?: boolean;
+  agentType?: 'manual' | 'assisted';
+  assistedConfig?: AssistedConfig;
 }
 
 export interface UpdateAIAgentData {
@@ -796,6 +805,9 @@ export interface UpdateAIAgentData {
   prompt?: string;
   waitTime?: number;
   isActive?: boolean;
+  transcribeAudio?: boolean;
+  agentType?: 'manual' | 'assisted';
+  assistedConfig?: AssistedConfig;
 }
 
 export interface AIAgentLead {

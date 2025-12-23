@@ -5,6 +5,9 @@ import { useLanguage } from '../contexts/LanguageContext';
 import { useAuth } from '../contexts/AuthContext';
 import { aiAgentAPI, instanceAPI, Instance } from '../services/api';
 import type { AIAgent, AIAgentLead } from '../services/api';
+import type { AssistedConfig } from '../types/aiAgent';
+import AssistedForm from '../components/AIAgent/AssistedForm';
+import { getErrorMessage, logError } from '../utils/errorHandler';
 
 const AIAgentPage: React.FC = () => {
   const { t } = useLanguage();
@@ -23,6 +26,9 @@ const AIAgentPage: React.FC = () => {
   const [agentPrompt, setAgentPrompt] = useState('');
   const [agentWaitTime, setAgentWaitTime] = useState(13);
   const [agentIsActive, setAgentIsActive] = useState(true);
+  const [agentTranscribeAudio, setAgentTranscribeAudio] = useState(true);
+  const [agentType, setAgentType] = useState<'manual' | 'assisted'>('manual');
+  const [assistedConfig, setAssistedConfig] = useState<AssistedConfig>({});
 
   // Carregar agentes
   const loadAgents = useCallback(async () => {
@@ -30,12 +36,14 @@ const AIAgentPage: React.FC = () => {
       setIsLoading(true);
       const response = await aiAgentAPI.getAll();
       setAgents(response.agents);
-    } catch (error: any) {
-      console.error('Erro ao carregar agentes:', error);
-      alert(error.message || 'Erro ao carregar agentes');
+    } catch (error: unknown) {
+      logError('AIAgent.loadAgents', error);
+      const errorMsg = getErrorMessage(error, t('aiAgent.error.loadAgents'));
+      alert(errorMsg);
     } finally {
       setIsLoading(false);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Carregar instâncias
@@ -53,10 +61,12 @@ const AIAgentPage: React.FC = () => {
     try {
       const response = await aiAgentAPI.getLeads(instanceId);
       setLeads(response.leads);
-    } catch (error: any) {
-      console.error('Erro ao carregar leads:', error);
-      alert(error.message || 'Erro ao carregar leads');
+    } catch (error: unknown) {
+      logError('AIAgent.loadLeads', error);
+      const errorMsg = getErrorMessage(error, t('aiAgent.error.loadLeads'));
+      alert(errorMsg);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
@@ -64,7 +74,8 @@ const AIAgentPage: React.FC = () => {
       loadAgents();
       loadInstances();
     }
-  }, [token, loadAgents, loadInstances]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [token]); // Remover loadAgents e loadInstances das dependências para evitar recarregamentos
 
   // Selecionar agente
   const handleSelectAgent = (agent: AIAgent) => {
@@ -74,17 +85,25 @@ const AIAgentPage: React.FC = () => {
     setAgentPrompt(agent.prompt);
     setAgentWaitTime(agent.waitTime);
     setAgentIsActive(agent.isActive);
+    setAgentTranscribeAudio(agent.transcribeAudio !== undefined ? agent.transcribeAudio : true);
+    setAgentType(agent.agentType || 'manual');
+    setAssistedConfig(agent.assistedConfig || {});
   };
 
   // Criar novo agente
   const handleCreateAgent = async () => {
-    if (!agentName.trim() || !agentInstanceId || !agentPrompt.trim()) {
-      alert('Preencha todos os campos obrigatórios');
+    if (!agentName.trim() || !agentInstanceId) {
+      alert(t('aiAgent.validation.fillRequired'));
       return;
     }
 
-    if (agentPrompt.length > 100000) {
-      alert('O prompt não pode exceder 100.000 caracteres');
+    if (agentType === 'manual' && !agentPrompt.trim()) {
+      alert(t('aiAgent.validation.fillPrompt'));
+      return;
+    }
+
+    if (agentPrompt && agentPrompt.length > 100000) {
+      alert(t('aiAgent.validation.promptMaxLength'));
       return;
     }
 
@@ -93,16 +112,20 @@ const AIAgentPage: React.FC = () => {
       const response = await aiAgentAPI.create({
         name: agentName.trim(),
         instanceId: agentInstanceId,
-        prompt: agentPrompt,
+        prompt: agentType === 'manual' ? agentPrompt : undefined,
         waitTime: agentWaitTime,
         isActive: agentIsActive,
+        transcribeAudio: agentTranscribeAudio,
+        agentType,
+        assistedConfig: agentType === 'assisted' ? assistedConfig : undefined,
       });
       setAgents([response.agent, ...agents]);
       setSelectedAgent(response.agent);
-      alert('Agente criado com sucesso!');
-    } catch (error: any) {
-      console.error('Erro ao criar agente:', error);
-      alert(error.message || 'Erro ao criar agente');
+      alert(t('aiAgent.success.createAgent'));
+    } catch (error: unknown) {
+      logError('AIAgent.createAgent', error);
+      const errorMsg = getErrorMessage(error, t('aiAgent.error.createAgent'));
+      alert(errorMsg);
     } finally {
       setIsSaving(false);
     }
@@ -112,13 +135,18 @@ const AIAgentPage: React.FC = () => {
   const handleUpdateAgent = async () => {
     if (!selectedAgent) return;
 
-    if (!agentName.trim() || !agentPrompt.trim()) {
-      alert('Preencha todos os campos obrigatórios');
+    if (!agentName.trim()) {
+      alert(t('aiAgent.validation.fillRequired'));
       return;
     }
 
-    if (agentPrompt.length > 100000) {
-      alert('O prompt não pode exceder 100.000 caracteres');
+    if (agentType === 'manual' && !agentPrompt.trim()) {
+      alert(t('aiAgent.validation.fillPrompt'));
+      return;
+    }
+
+    if (agentPrompt && agentPrompt.length > 100000) {
+      alert(t('aiAgent.validation.promptMaxLength'));
       return;
     }
 
@@ -126,16 +154,20 @@ const AIAgentPage: React.FC = () => {
       setIsSaving(true);
       const response = await aiAgentAPI.update(selectedAgent.id, {
         name: agentName.trim(),
-        prompt: agentPrompt,
+        prompt: agentType === 'manual' ? agentPrompt : undefined,
         waitTime: agentWaitTime,
         isActive: agentIsActive,
+        transcribeAudio: agentTranscribeAudio,
+        agentType,
+        assistedConfig: agentType === 'assisted' ? assistedConfig : undefined,
       });
       setAgents(agents.map((a) => (a.id === response.agent.id ? response.agent : a)));
       setSelectedAgent(response.agent);
-      alert('Agente atualizado com sucesso!');
-    } catch (error: any) {
-      console.error('Erro ao atualizar agente:', error);
-      alert(error.message || 'Erro ao atualizar agente');
+      alert(t('aiAgent.success.updateAgent'));
+    } catch (error: unknown) {
+      logError('AIAgent.updateAgent', error);
+      const errorMsg = getErrorMessage(error, t('aiAgent.error.updateAgent'));
+      alert(errorMsg);
     } finally {
       setIsSaving(false);
     }
@@ -145,7 +177,7 @@ const AIAgentPage: React.FC = () => {
   const handleDeleteAgent = async () => {
     if (!selectedAgent) return;
 
-    if (!window.confirm('Tem certeza que deseja deletar este agente?')) {
+    if (!window.confirm(t('aiAgent.confirm.delete'))) {
       return;
     }
 
@@ -153,27 +185,28 @@ const AIAgentPage: React.FC = () => {
       await aiAgentAPI.delete(selectedAgent.id);
       setAgents(agents.filter((a) => a.id !== selectedAgent.id));
       setSelectedAgent(null);
-      alert('Agente deletado com sucesso!');
-    } catch (error: any) {
-      console.error('Erro ao deletar agente:', error);
-      alert(error.message || 'Erro ao deletar agente');
+      alert(t('aiAgent.success.deleteAgent'));
+    } catch (error: unknown) {
+      logError('AIAgent.deleteAgent', error);
+      const errorMsg = getErrorMessage(error, t('aiAgent.error.deleteAgent'));
+      alert(errorMsg);
     }
   };
 
   // Exportar leads
   const handleExportLeads = (format: 'csv' | 'json') => {
     if (leads.length === 0) {
-      alert('Nenhum lead para exportar');
+      alert(t('aiAgent.export.noLeads'));
       return;
     }
 
     if (format === 'csv') {
-      const headers = ['Telefone', 'Nome', 'Interesse', 'Interesse Detectado', 'Última Interação', 'Total Mensagens'];
+      const headers = [t('aiAgent.phone'), t('aiAgent.name'), t('aiAgent.interest'), t('aiAgent.interest'), t('aiAgent.lastInteraction'), t('aiAgent.messages')];
       const rows = leads.map((lead) => [
         lead.phone,
         lead.name || '',
         lead.interest || '',
-        lead.detectedInterest ? 'Sim' : 'Não',
+        lead.detectedInterest ? t('aiAgent.yes') : t('aiAgent.no'),
         lead.lastInteraction || '',
         lead.history.length.toString(),
       ]);
@@ -204,7 +237,7 @@ const AIAgentPage: React.FC = () => {
     return (
       <AppLayout>
         <div className="flex items-center justify-center h-64">
-          <p className="text-gray-500">Carregando...</p>
+          <p className="text-gray-500">{t('aiAgent.loading')}</p>
         </div>
       </AppLayout>
     );
@@ -215,16 +248,16 @@ const AIAgentPage: React.FC = () => {
       <div className="p-6 space-y-6">
         <div className="flex items-center justify-between">
           <h1 className="text-2xl font-bold text-clerky-backendText dark:text-gray-200">
-            Agente de IA
+            {t('aiAgent.title')}
           </h1>
           <div className="flex gap-2">
             {selectedAgent && (
               <>
                 <Button variant="outline" onClick={handleViewLeads}>
-                  Ver Leads ({leads.length})
+                  {t('aiAgent.viewLeads')} ({leads.length})
                 </Button>
                 <Button variant="outline" onClick={handleDeleteAgent}>
-                  Deletar
+                  {t('aiAgent.delete')}
                 </Button>
               </>
             )}
@@ -236,9 +269,12 @@ const AIAgentPage: React.FC = () => {
                 setAgentPrompt('');
                 setAgentWaitTime(13);
                 setAgentIsActive(true);
+                setAgentTranscribeAudio(true);
+                setAgentType('manual');
+                setAssistedConfig({});
               }}
             >
-              Novo Agente
+              {t('aiAgent.newAgent')}
             </Button>
           </div>
         </div>
@@ -248,7 +284,7 @@ const AIAgentPage: React.FC = () => {
           <div className="lg:col-span-1">
             <Card padding="md">
               <h2 className="text-lg font-semibold mb-4 text-clerky-backendText dark:text-gray-200">
-                Agentes
+                {t('aiAgent.agents')}
               </h2>
               <div className="space-y-2">
                 {agents.map((agent) => (
@@ -272,19 +308,19 @@ const AIAgentPage: React.FC = () => {
                             : 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-400'
                         }`}
                       >
-                        {agent.isActive ? 'Ativo' : 'Inativo'}
+                        {agent.isActive ? t('aiAgent.active') : t('aiAgent.inactive')}
                       </span>
                     </div>
                     <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
                       {instances.find((i) => i.id === agent.instanceId)?.name || agent.instanceId}
                     </p>
                     <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">
-                      Wait: {agent.waitTime}s
+                      {t('aiAgent.waitTime', { time: agent.waitTime.toString() })}
                     </p>
                   </div>
                 ))}
                 {agents.length === 0 && (
-                  <p className="text-gray-500 text-center py-4">Nenhum agente criado ainda</p>
+                  <p className="text-gray-500 text-center py-4">{t('aiAgent.noAgents')}</p>
                 )}
               </div>
             </Card>
@@ -294,20 +330,20 @@ const AIAgentPage: React.FC = () => {
           <div className="lg:col-span-2">
             <Card padding="md">
               <h2 className="text-lg font-semibold mb-4 text-clerky-backendText dark:text-gray-200">
-                {selectedAgent ? 'Editar Agente' : 'Novo Agente'}
+                {selectedAgent ? t('aiAgent.editAgent') : t('aiAgent.createAgent')}
               </h2>
 
               <div className="space-y-4">
                 <Input
-                  label="Nome do Agente"
+                  label={t('aiAgent.agentName')}
                   value={agentName}
                   onChange={(e) => setAgentName(e.target.value)}
-                  placeholder="Ex: Atendimento Automático"
+                  placeholder={t('aiAgent.agentNamePlaceholder')}
                 />
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    Instância WhatsApp *
+                    {t('aiAgent.whatsappInstance')} *
                   </label>
                   <select
                     value={agentInstanceId}
@@ -315,7 +351,7 @@ const AIAgentPage: React.FC = () => {
                     className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-clerky-backendButton focus:border-transparent bg-white dark:bg-gray-700 text-clerky-backendText dark:text-gray-200"
                     disabled={!!selectedAgent}
                   >
-                    <option value="">Selecione uma instância</option>
+                    <option value="">{t('aiAgent.selectInstance')}</option>
                     {instances.map((instance) => (
                       <option key={instance.id} value={instance.id}>
                         {instance.name}
@@ -326,50 +362,71 @@ const AIAgentPage: React.FC = () => {
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    Tempo de Espera (segundos) *
+                    {t('aiAgent.waitTimeLabel')} *
                   </label>
-                  <Input
+                  <input
                     type="number"
                     min="1"
+                    max="999"
                     value={agentWaitTime}
                     onChange={(e) => setAgentWaitTime(parseInt(e.target.value) || 13)}
                     placeholder="13"
+                    className="w-20 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-clerky-backendButton focus:border-transparent bg-white dark:bg-gray-700 text-clerky-backendText dark:text-gray-200 text-center"
                   />
                   <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                    Tempo para agrupar mensagens consecutivas antes de processar
+                    {t('aiAgent.waitTimeHelper')}
                   </p>
                 </div>
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    Prompt do Agente * ({agentPrompt.length}/100.000 caracteres)
+                    {t('aiAgent.agentModel')} *
                   </label>
-                  <textarea
-                    value={agentPrompt}
-                    onChange={(e) => setAgentPrompt(e.target.value)}
-                    placeholder="Digite o prompt do agente aqui..."
-                    className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-clerky-backendButton focus:border-transparent bg-white dark:bg-gray-700 text-clerky-backendText dark:text-gray-200 min-h-[300px] font-mono text-sm"
-                    maxLength={100000}
-                  />
+                  <select
+                    value={agentType}
+                    onChange={(e) => {
+                      setAgentType(e.target.value as 'manual' | 'assisted');
+                      if (e.target.value === 'manual') {
+                        setAssistedConfig({});
+                      }
+                    }}
+                    className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-clerky-backendButton focus:border-transparent bg-white dark:bg-gray-700 text-clerky-backendText dark:text-gray-200"
+                  >
+                    <option value="manual">{t('aiAgent.modelManual')}</option>
+                    <option value="assisted">{t('aiAgent.modelAssisted')}</option>
+                  </select>
                   <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                    Este prompt define o comportamento do agente. Use até 100.000 caracteres.
+                    {t('aiAgent.modelHelper')}
                   </p>
                 </div>
 
-                <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
-                  <h3 className="text-sm font-semibold text-blue-900 dark:text-blue-200 mb-2">
-                    📡 URL de Callback para Transcrição de Áudio
-                  </h3>
-                  <p className="text-xs text-blue-700 dark:text-blue-300 mb-2">
-                    Use esta URL para receber transcrições de áudio:
-                  </p>
-                  <code className="block bg-white dark:bg-gray-800 p-2 rounded text-xs break-all text-blue-900 dark:text-blue-200">
-                    https://back.clerky.com.br/api/ai-agent/transcription-callback
-                  </code>
-                  <p className="text-xs text-blue-600 dark:text-blue-400 mt-2">
-                    Payload esperado: {'{'} "userId": "...", "contactPhone": "...", "instanceId": "...", "messageId": "...", "transcription": "..." {'}'}
-                  </p>
-                </div>
+                {agentType === 'manual' ? (
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                      {t('aiAgent.promptLabel')} * ({agentPrompt.length.toLocaleString()}/100,000 {t('aiAgent.characters')})
+                    </label>
+                    <textarea
+                      value={agentPrompt}
+                      onChange={(e) => setAgentPrompt(e.target.value)}
+                      placeholder={t('aiAgent.promptPlaceholder')}
+                      className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-clerky-backendButton focus:border-transparent bg-white dark:bg-gray-700 text-clerky-backendText dark:text-gray-200 min-h-[300px] font-mono text-sm"
+                      maxLength={100000}
+                    />
+                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                      {t('aiAgent.promptHelper')}
+                    </p>
+                  </div>
+                ) : (
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                      {t('aiAgent.assistedFormTitle')}
+                    </label>
+                    <p className="text-xs text-gray-500 dark:text-gray-400 mb-4">
+                      {t('aiAgent.assistedFormHelper')}
+                    </p>
+                    <AssistedForm key="assisted-form" config={assistedConfig} onChange={setAssistedConfig} />
+                  </div>
+                )}
 
                 <div className="flex items-center gap-2">
                   <input
@@ -380,16 +437,32 @@ const AIAgentPage: React.FC = () => {
                     className="w-4 h-4 text-clerky-backendButton border-gray-300 rounded focus:ring-clerky-backendButton"
                   />
                   <label htmlFor="isActive" className="text-sm text-gray-700 dark:text-gray-300">
-                    Agente ativo
+                    {t('aiAgent.isActive')}
                   </label>
                 </div>
+
+                <div className="flex items-center gap-2">
+                  <input
+                    type="checkbox"
+                    id="transcribeAudio"
+                    checked={agentTranscribeAudio}
+                    onChange={(e) => setAgentTranscribeAudio(e.target.checked)}
+                    className="w-4 h-4 text-clerky-backendButton border-gray-300 rounded focus:ring-clerky-backendButton"
+                  />
+                  <label htmlFor="transcribeAudio" className="text-sm text-gray-700 dark:text-gray-300">
+                    {t('aiAgent.transcribeAudio')}
+                  </label>
+                </div>
+                <p className="text-xs text-gray-500 dark:text-gray-400 ml-6">
+                  {t('aiAgent.transcribeAudioHelper')}
+                </p>
 
                 <div className="flex gap-2">
                   <Button
                     onClick={selectedAgent ? handleUpdateAgent : handleCreateAgent}
                     disabled={isSaving}
                   >
-                    {isSaving ? 'Salvando...' : selectedAgent ? 'Atualizar' : 'Criar'}
+                    {isSaving ? t('aiAgent.saving') : selectedAgent ? t('aiAgent.update') : t('aiAgent.create')}
                   </Button>
                 </div>
               </div>
@@ -401,15 +474,15 @@ const AIAgentPage: React.FC = () => {
         <Modal
           isOpen={showLeadsModal}
           onClose={() => setShowLeadsModal(false)}
-          title="Leads do Agente"
+          title={t('aiAgent.leadsTitle')}
         >
           <div className="space-y-4">
             <div className="flex gap-2 justify-end">
               <Button variant="outline" onClick={() => handleExportLeads('csv')}>
-                Exportar CSV
+                {t('aiAgent.exportCSV')}
               </Button>
               <Button variant="outline" onClick={() => handleExportLeads('json')}>
-                Exportar JSON
+                {t('aiAgent.exportJSON')}
               </Button>
             </div>
 
@@ -417,11 +490,11 @@ const AIAgentPage: React.FC = () => {
               <table className="w-full text-sm">
                 <thead className="bg-gray-100 dark:bg-gray-800 sticky top-0">
                   <tr>
-                    <th className="px-4 py-2 text-left">Telefone</th>
-                    <th className="px-4 py-2 text-left">Nome</th>
-                    <th className="px-4 py-2 text-left">Interesse</th>
-                    <th className="px-4 py-2 text-left">Última Interação</th>
-                    <th className="px-4 py-2 text-left">Mensagens</th>
+                    <th className="px-4 py-2 text-left">{t('aiAgent.phone')}</th>
+                    <th className="px-4 py-2 text-left">{t('aiAgent.name')}</th>
+                    <th className="px-4 py-2 text-left">{t('aiAgent.interest')}</th>
+                    <th className="px-4 py-2 text-left">{t('aiAgent.lastInteraction')}</th>
+                    <th className="px-4 py-2 text-left">{t('aiAgent.messages')}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -431,14 +504,14 @@ const AIAgentPage: React.FC = () => {
                       <td className="px-4 py-2">{lead.name || '-'}</td>
                       <td className="px-4 py-2">
                         {lead.detectedInterest ? (
-                          <span className="text-green-600 dark:text-green-400">Sim</span>
+                          <span className="text-green-600 dark:text-green-400">{t('aiAgent.yes')}</span>
                         ) : (
-                          <span className="text-gray-400">Não</span>
+                          <span className="text-gray-400">{t('aiAgent.no')}</span>
                         )}
                       </td>
                       <td className="px-4 py-2">
                         {lead.lastInteraction
-                          ? new Date(lead.lastInteraction).toLocaleString('pt-BR')
+                          ? new Date(lead.lastInteraction).toLocaleString()
                           : '-'}
                       </td>
                       <td className="px-4 py-2">{lead.history.length}</td>
@@ -447,7 +520,7 @@ const AIAgentPage: React.FC = () => {
                 </tbody>
               </table>
               {leads.length === 0 && (
-                <p className="text-center text-gray-500 py-4">Nenhum lead encontrado</p>
+                <p className="text-center text-gray-500 py-4">{t('aiAgent.noLeads')}</p>
               )}
             </div>
           </div>

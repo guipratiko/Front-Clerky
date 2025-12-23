@@ -793,11 +793,32 @@ const NodeSettingsPanel: React.FC<NodeSettingsPanelProps> = ({ node, instances, 
       mediaUrl?: string;
       caption?: string;
       fileName?: string;
+      responseInstanceId?: string;
     };
     const responseType = responseData.responseType || 'text';
 
     return (
       <div className="space-y-4">
+        <div>
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+            {t('mindClerky.nodeSettings.instance')}
+          </label>
+          <select
+            value={responseData.responseInstanceId || ''}
+            onChange={(e) => onUpdate({ responseInstanceId: e.target.value || undefined })}
+            className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-clerky-backendButton focus:border-transparent bg-white dark:bg-gray-700 text-clerky-backendText dark:text-gray-200"
+          >
+            <option value="">{t('mindClerky.nodeSettings.useWorkflowInstance')}</option>
+            {instances.map((instance) => (
+              <option key={instance.id} value={instance.id}>
+                {instance.name}
+              </option>
+            ))}
+          </select>
+          <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+            {t('mindClerky.nodeSettings.responseInstanceHelper')}
+          </p>
+        </div>
         <div>
           <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
             {t('mindClerky.nodeSettings.responseType')}
