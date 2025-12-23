@@ -973,6 +973,43 @@ const NodeSettingsPanel: React.FC<NodeSettingsPanelProps> = ({ node, instances, 
       spreadsheetName?: string;
       isAuthenticated?: boolean;
       sheetName?: string;
+      useExisting?: boolean;
+      selectedSpreadsheetId?: string;
+    };
+    
+    const [spreadsheets, setSpreadsheets] = React.useState<Array<{ id: string; name: string; url: string }>>([]);
+    const [loadingSpreadsheets, setLoadingSpreadsheets] = React.useState(false);
+
+    React.useEffect(() => {
+      if (spreadsheetData.isAuthenticated && spreadsheetData.useExisting) {
+        loadSpreadsheets();
+      }
+    }, [spreadsheetData.isAuthenticated, spreadsheetData.useExisting]);
+
+    const loadSpreadsheets = async () => {
+      try {
+        setLoadingSpreadsheets(true);
+        const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:4331/api';
+        const token = localStorage.getItem('token');
+        
+        const response = await fetch(`${API_URL}/google/spreadsheets`, {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+          },
+        });
+
+        if (!response.ok) {
+          throw new Error('Erro ao carregar planilhas');
+        }
+
+        const data = await response.json();
+        setSpreadsheets(data.spreadsheets || []);
+      } catch (error: any) {
+        console.error('Erro ao carregar planilhas:', error);
+        alert(error.message || 'Erro ao carregar planilhas');
+      } finally {
+        setLoadingSpreadsheets(false);
+      }
     };
 
     const handleGoogleAuth = async () => {
@@ -1062,14 +1099,66 @@ const NodeSettingsPanel: React.FC<NodeSettingsPanelProps> = ({ node, instances, 
           <>
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                {t('mindClerky.nodeSettings.spreadsheetName')}
+                {t('mindClerky.nodeSettings.spreadsheetMode')}
               </label>
-              <Input
-                value={spreadsheetData.spreadsheetName || ''}
-                onChange={(e) => onUpdate({ spreadsheetName: e.target.value })}
-                placeholder={t('mindClerky.nodeSettings.spreadsheetNamePlaceholder')}
-              />
+              <select
+                value={spreadsheetData.useExisting ? 'existing' : 'new'}
+                onChange={(e) => {
+                  const useExisting = e.target.value === 'existing';
+                  onUpdate({ 
+                    useExisting,
+                    selectedSpreadsheetId: useExisting ? undefined : spreadsheetData.selectedSpreadsheetId,
+                    spreadsheetId: useExisting ? spreadsheetData.selectedSpreadsheetId : undefined,
+                  });
+                }}
+                className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-clerky-backendButton focus:border-transparent bg-white dark:bg-gray-700 text-clerky-backendText dark:text-gray-200"
+              >
+                <option value="new">{t('mindClerky.nodeSettings.createNewSpreadsheet')}</option>
+                <option value="existing">{t('mindClerky.nodeSettings.useExistingSpreadsheet')}</option>
+              </select>
             </div>
+
+            {spreadsheetData.useExisting ? (
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  {t('mindClerky.nodeSettings.selectSpreadsheet')}
+                </label>
+                {loadingSpreadsheets ? (
+                  <p className="text-sm text-gray-500 dark:text-gray-400">{t('mindClerky.nodeSettings.loadingSpreadsheets')}</p>
+                ) : (
+                  <select
+                    value={spreadsheetData.selectedSpreadsheetId || ''}
+                    onChange={(e) => {
+                      const selectedId = e.target.value;
+                      onUpdate({ 
+                        selectedSpreadsheetId: selectedId,
+                        spreadsheetId: selectedId,
+                      });
+                    }}
+                    className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-clerky-backendButton focus:border-transparent bg-white dark:bg-gray-700 text-clerky-backendText dark:text-gray-200"
+                  >
+                    <option value="">{t('mindClerky.nodeSettings.selectSpreadsheetPlaceholder')}</option>
+                    {spreadsheets.map((spreadsheet) => (
+                      <option key={spreadsheet.id} value={spreadsheet.id}>
+                        {spreadsheet.name}
+                      </option>
+                    ))}
+                  </select>
+                )}
+              </div>
+            ) : (
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  {t('mindClerky.nodeSettings.spreadsheetName')}
+                </label>
+                <Input
+                  value={spreadsheetData.spreadsheetName || ''}
+                  onChange={(e) => onUpdate({ spreadsheetName: e.target.value })}
+                  placeholder={t('mindClerky.nodeSettings.spreadsheetNamePlaceholder')}
+                />
+              </div>
+            )}
+
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                 {t('mindClerky.nodeSettings.sheetName')}
