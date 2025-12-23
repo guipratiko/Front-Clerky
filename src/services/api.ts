@@ -708,7 +708,7 @@ export interface Workflow {
 
 export interface CreateWorkflowData {
   name: string;
-  instanceId: string;
+  instanceId?: string; // Opcional - será obtido do nó de gatilho WhatsApp se não fornecido
   nodes: WorkflowNode[];
   edges: WorkflowEdge[];
   isActive?: boolean;

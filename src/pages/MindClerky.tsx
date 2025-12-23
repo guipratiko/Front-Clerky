@@ -28,7 +28,6 @@ const MindClerky: React.FC = () => {
 
   // Estados do formulário de criação
   const [workflowName, setWorkflowName] = useState('');
-  const [workflowInstanceId, setWorkflowInstanceId] = useState('');
   const [workflowNodes, setWorkflowNodes] = useState<WorkflowNode[]>([]);
   const [workflowEdges, setWorkflowEdges] = useState<WorkflowEdge[]>([]);
 
@@ -123,15 +122,15 @@ const MindClerky: React.FC = () => {
 
   // Criar novo workflow
   const handleCreateWorkflow = async () => {
-    if (!workflowName.trim() || !workflowInstanceId) {
-      alert('Preencha o nome e selecione uma instância');
+    if (!workflowName.trim()) {
+      alert('Preencha o nome do workflow');
       return;
     }
 
     try {
       const response = await workflowAPI.create({
         name: workflowName.trim(),
-        instanceId: workflowInstanceId,
+        // instanceId não é necessário - será obtido do nó de gatilho WhatsApp
         nodes: workflowNodes,
         edges: workflowEdges,
         isActive: true,
@@ -139,7 +138,6 @@ const MindClerky: React.FC = () => {
       setWorkflows([response.workflow, ...workflows]);
       setShowCreateModal(false);
       setWorkflowName('');
-      setWorkflowInstanceId('');
       setWorkflowNodes([]);
       setWorkflowEdges([]);
       setSelectedWorkflow(response.workflow);
@@ -330,7 +328,6 @@ const MindClerky: React.FC = () => {
             onClose={() => {
               setShowCreateModal(false);
               setWorkflowName('');
-              setWorkflowInstanceId('');
             }}
             title={t('mindClerky.createNewWorkflow')}
           >
@@ -341,23 +338,9 @@ const MindClerky: React.FC = () => {
                 onChange={(e) => setWorkflowName(e.target.value)}
                 placeholder={t('mindClerky.workflowNamePlaceholder')}
               />
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  {t('mindClerky.nodeSettings.instance')}
-                </label>
-                <select
-                  value={workflowInstanceId}
-                  onChange={(e) => setWorkflowInstanceId(e.target.value)}
-                  className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-clerky-backendButton focus:border-transparent bg-white dark:bg-gray-700 text-clerky-backendText dark:text-gray-200"
-                >
-                  <option value="">{t('mindClerky.nodeSettings.selectInstance')}</option>
-                  {instances.map((instance) => (
-                    <option key={instance.id} value={instance.id}>
-                      {instance.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
+              <p className="text-xs text-gray-500 dark:text-gray-400">
+                {t('mindClerky.instanceNote')}
+              </p>
               <div className="flex gap-2 justify-end">
                 <Button variant="outline" onClick={() => setShowCreateModal(false)}>
                   {t('mindClerky.cancel')}
