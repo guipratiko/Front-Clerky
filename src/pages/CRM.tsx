@@ -1168,48 +1168,48 @@ const CRM: React.FC = () => {
     }
     
     // Atualizar o contato específico que recebeu a mensagem
-    setContacts((prevContacts) => {
+      setContacts((prevContacts) => {
       // Verificar se o contato existe na lista atual
-      const contactExists = prevContacts.some((c) => c.id === data.contactId);
-      
+        const contactExists = prevContacts.some((c) => c.id === data.contactId);
+        
       // Se o contato não existe na lista atual, recarregar lista completa
-      if (!contactExists) {
+        if (!contactExists) {
         if (dataInstanceId === currentInstanceId || !dataInstanceId) {
           loadContacts();
         }
-        return prevContacts;
-      }
+          return prevContacts;
+        }
 
-      // Atualizar o contato específico
-      const updatedContacts = prevContacts.map((contact) => {
-        if (contact.id === data.contactId) {
-          // Pegar a última mensagem (a mais recente)
-          const lastMessage = data.messages && data.messages.length > 0 
-            ? data.messages[data.messages.length - 1] 
-            : null;
-          
+        // Atualizar o contato específico
+        const updatedContacts = prevContacts.map((contact) => {
+          if (contact.id === data.contactId) {
+            // Pegar a última mensagem (a mais recente)
+            const lastMessage = data.messages && data.messages.length > 0 
+              ? data.messages[data.messages.length - 1] 
+              : null;
+            
           // Formatar conteúdo da última mensagem usando função utilitária
           const lastMessageContent = lastMessage 
             ? formatLastMessageContent(lastMessage) || contact.lastMessage
             : contact.lastMessage;
           
-          // Calcular nova contagem de não lidas
+            // Calcular nova contagem de não lidas
           let newUnreadCount = contact.unreadCount || 0;
           if (lastMessage && !lastMessage.fromMe && !lastMessage.read) {
             newUnreadCount = (contact.unreadCount || 0) + 1;
-          }
-          
-          return {
-            ...contact,
+            }
+            
+            return {
+              ...contact,
             lastMessage: lastMessageContent,
-            lastMessageAt: lastMessage?.timestamp || contact.lastMessageAt || null,
-            unreadCount: newUnreadCount,
-          };
-        }
-        return contact;
+              lastMessageAt: lastMessage?.timestamp || contact.lastMessageAt || null,
+              unreadCount: newUnreadCount,
+            };
+          }
+          return contact;
+        });
+        return updatedContacts;
       });
-      return updatedContacts;
-    });
   }, [selectedInstanceId, loadContacts]);
 
   // Ref para evitar recarregamentos desnecessários
@@ -1232,7 +1232,7 @@ const CRM: React.FC = () => {
       }
       contactUpdateTimeoutRef.current = setTimeout(() => {
         lastContactUpdateRef.current = Date.now();
-        loadContacts();
+      loadContacts();
       }, 500);
       return;
     }

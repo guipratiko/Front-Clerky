@@ -376,7 +376,7 @@ const MindClerky: React.FC = () => {
   // Editor de workflow
   return (
     <AppLayout>
-      <div className="flex h-[calc(100vh-80px)]">
+      <div className="flex h-[calc(100vh-140px)]">
         {/* Paleta de nós */}
         <NodePalette onAddNode={handleAddNode} />
 

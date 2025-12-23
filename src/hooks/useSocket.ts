@@ -205,39 +205,39 @@ export const useSocket = (
         socket.off('workflow-contact-updated');
         socket.off('error');
 
-        socket.on('instance-status-updated', (data: { instanceId: string; status: string }) => {
-          callbacks.forEach((cb) => {
-            if (cb.onStatusUpdate) {
-              cb.onStatusUpdate(data);
-            }
-          });
+      socket.on('instance-status-updated', (data: { instanceId: string; status: string }) => {
+        callbacks.forEach((cb) => {
+          if (cb.onStatusUpdate) {
+            cb.onStatusUpdate(data);
+          }
         });
+      });
 
-        socket.on('contact-updated', () => {
-          callbacks.forEach((cb) => {
-            if (cb.onContactUpdate) {
-              cb.onContactUpdate();
-            }
-          });
+      socket.on('contact-updated', () => {
+        callbacks.forEach((cb) => {
+          if (cb.onContactUpdate) {
+            cb.onContactUpdate();
+          }
         });
+      });
 
-        socket.on('new-message', (data: NewMessageData) => {
-          callbacks.forEach((cb) => {
-            if (cb.onNewMessage) {
-              cb.onNewMessage(data);
-            }
+      socket.on('new-message', (data: NewMessageData) => {
+        callbacks.forEach((cb) => {
+          if (cb.onNewMessage) {
+            cb.onNewMessage(data);
+          }
             // Não chamar onContactUpdate aqui - o handleNewMessage já atualiza o card
             // O onContactUpdate será chamado apenas quando necessário via evento 'contact-updated'
-          });
         });
+      });
 
-        socket.on('dispatch-updated', (data: DispatchUpdateData) => {
-          callbacks.forEach((cb) => {
-            if (cb.onDispatchUpdate) {
-              cb.onDispatchUpdate(data);
-            }
-          });
+      socket.on('dispatch-updated', (data: DispatchUpdateData) => {
+        callbacks.forEach((cb) => {
+          if (cb.onDispatchUpdate) {
+            cb.onDispatchUpdate(data);
+          }
         });
+      });
 
         socket.on('workflow-contact-updated', (data: { workflowId: string; contactPhone: string; instanceId: string }) => {
           callbacks.forEach((cb) => {
@@ -247,9 +247,9 @@ export const useSocket = (
           });
         });
 
-        socket.on('error', (error: { message: string }) => {
-          console.error('❌ [Socket] Erro no WebSocket:', error.message);
-        });
+      socket.on('error', (error: { message: string }) => {
+        console.error('❌ [Socket] Erro no WebSocket:', error.message);
+      });
       };
 
       // Função para registrar listeners de conexão (apenas uma vez)
