@@ -591,6 +591,51 @@ interface NodeSettingsPanelProps {
 
 const NodeSettingsPanel: React.FC<NodeSettingsPanelProps> = ({ node, instances, selectedWorkflow, onUpdate, onShowVariablesModal }) => {
   const { t } = useLanguage();
+  
+  // Hooks para planilha (devem estar no topo do componente)
+  const [spreadsheets, setSpreadsheets] = React.useState<Array<{ id: string; name: string; url: string }>>([]);
+  const [loadingSpreadsheets, setLoadingSpreadsheets] = React.useState(false);
+
+  // Função para carregar planilhas
+  const loadSpreadsheets = React.useCallback(async () => {
+    try {
+      setLoadingSpreadsheets(true);
+      const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:4331/api';
+      const token = localStorage.getItem('token');
+      
+      const response = await fetch(`${API_URL}/google/spreadsheets`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error('Erro ao carregar planilhas');
+      }
+
+      const data = await response.json();
+      setSpreadsheets(data.spreadsheets || []);
+    } catch (error: any) {
+      console.error('Erro ao carregar planilhas:', error);
+      alert(error.message || 'Erro ao carregar planilhas');
+    } finally {
+      setLoadingSpreadsheets(false);
+    }
+  }, []);
+
+  // Carregar planilhas quando necessário
+  React.useEffect(() => {
+    if (node.type === 'spreadsheet') {
+      const spreadsheetData = node.data as {
+        isAuthenticated?: boolean;
+        useExisting?: boolean;
+      };
+      
+      if (spreadsheetData.isAuthenticated && spreadsheetData.useExisting) {
+        loadSpreadsheets();
+      }
+    }
+  }, [node.type, node.data, loadSpreadsheets]);
 
   if (node.type === 'whatsappTrigger') {
     const triggerData = node.data as { instanceId?: string };
@@ -975,41 +1020,6 @@ const NodeSettingsPanel: React.FC<NodeSettingsPanelProps> = ({ node, instances, 
       sheetName?: string;
       useExisting?: boolean;
       selectedSpreadsheetId?: string;
-    };
-    
-    const [spreadsheets, setSpreadsheets] = React.useState<Array<{ id: string; name: string; url: string }>>([]);
-    const [loadingSpreadsheets, setLoadingSpreadsheets] = React.useState(false);
-
-    React.useEffect(() => {
-      if (spreadsheetData.isAuthenticated && spreadsheetData.useExisting) {
-        loadSpreadsheets();
-      }
-    }, [spreadsheetData.isAuthenticated, spreadsheetData.useExisting]);
-
-    const loadSpreadsheets = async () => {
-      try {
-        setLoadingSpreadsheets(true);
-        const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:4331/api';
-        const token = localStorage.getItem('token');
-        
-        const response = await fetch(`${API_URL}/google/spreadsheets`, {
-          headers: {
-            'Authorization': `Bearer ${token}`,
-          },
-        });
-
-        if (!response.ok) {
-          throw new Error('Erro ao carregar planilhas');
-        }
-
-        const data = await response.json();
-        setSpreadsheets(data.spreadsheets || []);
-      } catch (error: any) {
-        console.error('Erro ao carregar planilhas:', error);
-        alert(error.message || 'Erro ao carregar planilhas');
-      } finally {
-        setLoadingSpreadsheets(false);
-      }
     };
 
     const handleGoogleAuth = async () => {
