@@ -12,7 +12,7 @@ import Dispatches from './pages/Dispatches';
 import CRM from './pages/CRM';
 import MindClerky from './pages/MindClerky';
 import Integration from './pages/Integration';
-import AIAgent from './pages/AIAgent';
+import AIAgentPage from './pages/AIAgent';
 import Documentation from './pages/Documentation';
 import Settings from './pages/Settings';
 import { usePageTitle } from './hooks/usePageTitle';
@@ -76,7 +76,7 @@ function AppContent() {
         path="/agente-ia"
         element={
           <ProtectedRoute>
-            <AIAgent />
+            <AIAgentPage />
           </ProtectedRoute>
         }
       />

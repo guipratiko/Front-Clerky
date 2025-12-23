@@ -770,7 +770,84 @@ export const workflowAPI = {
   },
 };
 
-const api = { authAPI, instanceAPI, crmAPI, dispatchAPI, workflowAPI };
+// Agente de IA
+export interface AIAgent {
+  id: string;
+  userId: string;
+  instanceId: string;
+  name: string;
+  prompt: string;
+  waitTime: number;
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CreateAIAgentData {
+  instanceId: string;
+  name: string;
+  prompt: string;
+  waitTime?: number;
+  isActive?: boolean;
+}
+
+export interface UpdateAIAgentData {
+  name?: string;
+  prompt?: string;
+  waitTime?: number;
+  isActive?: boolean;
+}
+
+export interface AIAgentLead {
+  phone: string;
+  name?: string;
+  interest?: string;
+  detectedInterest?: boolean;
+  lastInteraction?: string;
+  history: Array<{
+    role: 'user' | 'assistant';
+    content: string;
+    timestamp: string;
+  }>;
+}
+
+// API de Agente de IA
+export const aiAgentAPI = {
+  getAll: async (): Promise<{ status: string; agents: AIAgent[] }> => {
+    return request<{ status: string; agents: AIAgent[] }>('/ai-agent');
+  },
+
+  getById: async (id: string): Promise<{ status: string; agent: AIAgent }> => {
+    return request<{ status: string; agent: AIAgent }>(`/ai-agent/${id}`);
+  },
+
+  create: async (data: CreateAIAgentData): Promise<{ status: string; message: string; agent: AIAgent }> => {
+    return request<{ status: string; message: string; agent: AIAgent }>('/ai-agent', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  },
+
+  update: async (id: string, data: UpdateAIAgentData): Promise<{ status: string; message: string; agent: AIAgent }> => {
+    return request<{ status: string; message: string; agent: AIAgent }>(`/ai-agent/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    });
+  },
+
+  delete: async (id: string): Promise<{ status: string; message: string }> => {
+    return request<{ status: string; message: string }>(`/ai-agent/${id}`, {
+      method: 'DELETE',
+    });
+  },
+
+  getLeads: async (instanceId?: string): Promise<{ status: string; leads: AIAgentLead[]; count: number }> => {
+    const url = instanceId ? `/ai-agent/leads?instanceId=${instanceId}` : '/ai-agent/leads';
+    return request<{ status: string; leads: AIAgentLead[]; count: number }>(url);
+  },
+};
+
+const api = { authAPI, instanceAPI, crmAPI, dispatchAPI, workflowAPI, aiAgentAPI };
 
 export default api;
 
