@@ -364,7 +364,7 @@ const AIAgentPage: React.FC = () => {
                     Use esta URL para receber transcrições de áudio:
                   </p>
                   <code className="block bg-white dark:bg-gray-800 p-2 rounded text-xs break-all text-blue-900 dark:text-blue-200">
-                    https://api.clerky.com.br/api/ai-agent/transcription-callback
+                    https://back.clerky.com.br/api/ai-agent/transcription-callback
                   </code>
                   <p className="text-xs text-blue-600 dark:text-blue-400 mt-2">
                     Payload esperado: {'{'} "userId": "...", "contactPhone": "...", "instanceId": "...", "messageId": "...", "transcription": "..." {'}'}

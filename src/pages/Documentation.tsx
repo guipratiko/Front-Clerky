@@ -5,7 +5,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { instanceAPI, Instance } from '../services/api';
 
 // URL base da API externa (sempre usa a URL de produção na documentação)
-const API_BASE_URL = 'https://api.clerky.com.br';
+const API_BASE_URL = 'https://back.clerky.com.br';
 
 const Documentation: React.FC = () => {
   const { token } = useAuth();
