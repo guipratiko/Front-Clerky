@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { AppLayout } from '../components/Layout';
 import { Card, Button, Modal, Input } from '../components/UI';
 import ImageCrop from '../components/UI/ImageCrop';
@@ -96,20 +96,32 @@ const GroupManager: React.FC = () => {
     }
   }, [selectedInstance]);
 
+  // Ref para controlar se já está carregando (evitar requisições simultâneas)
+  const isLoadingGroupsRef = useRef(false);
+  const lastGroupsUpdateRef = useRef(0);
+
   // Carregar grupos
   const loadGroups = useCallback(async () => {
     if (!selectedInstance) return;
 
+    // Evitar requisições simultâneas
+    if (isLoadingGroupsRef.current) {
+      return;
+    }
+
     try {
+      isLoadingGroupsRef.current = true;
       setIsLoading(true);
       setError(null);
       const response = await groupAPI.getAll(selectedInstance);
       setGroups(response.groups || []);
+      lastGroupsUpdateRef.current = Date.now();
     } catch (error: unknown) {
       logError('Erro ao carregar grupos', error);
       setError(getErrorMessage(error, t('groupManager.error.loadGroups')));
     } finally {
       setIsLoading(false);
+      isLoadingGroupsRef.current = false;
     }
   }, [selectedInstance, t]);
 
@@ -889,13 +901,46 @@ const GroupManager: React.FC = () => {
     }
   };
 
-  // Callback para atualizar grupos via WebSocket
+  // Timeout ref para debounce
+  const groupsUpdateTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Callback para atualizar grupos via WebSocket com debounce
   const handleGroupsUpdate = useCallback((data: { instanceId: string }) => {
     // Recarregar grupos apenas se a instância atual for a que foi atualizada
-    if (selectedInstance === data.instanceId) {
-      loadGroups();
+    if (selectedInstance !== data.instanceId) {
+      return;
     }
+
+    // Limpar timeout anterior se existir
+    if (groupsUpdateTimeoutRef.current) {
+      clearTimeout(groupsUpdateTimeoutRef.current);
+    }
+
+    const now = Date.now();
+    const timeSinceLastUpdate = now - lastGroupsUpdateRef.current;
+
+    // Se passou menos de 2 segundos desde a última atualização, aguardar
+    if (timeSinceLastUpdate < 2000) {
+      groupsUpdateTimeoutRef.current = setTimeout(() => {
+        lastGroupsUpdateRef.current = Date.now();
+        loadGroups();
+      }, 2000 - timeSinceLastUpdate);
+      return;
+    }
+
+    // Atualizar imediatamente se passou tempo suficiente
+    lastGroupsUpdateRef.current = now;
+    loadGroups();
   }, [selectedInstance, loadGroups]);
+
+  // Cleanup do timeout quando componente desmontar
+  useEffect(() => {
+    return () => {
+      if (groupsUpdateTimeoutRef.current) {
+        clearTimeout(groupsUpdateTimeoutRef.current);
+      }
+    };
+  }, []);
 
   // Conectar ao WebSocket
   useSocket(token, undefined, undefined, undefined, undefined, undefined, handleGroupsUpdate);
