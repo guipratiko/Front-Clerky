@@ -34,43 +34,88 @@ interface StatCardProps {
 }
 
 const StatCard: React.FC<StatCardProps> = ({ title, value, subtitle, color = '#0040FF' }) => {
+  // Converter cor hexadecimal para rgba
+  const hexToRgb = (hex: string) => {
+    const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+    return result
+      ? {
+          r: parseInt(result[1], 16),
+          g: parseInt(result[2], 16),
+          b: parseInt(result[3], 16),
+        }
+      : { r: 0, g: 64, b: 255 };
+  };
+
+  const rgb = hexToRgb(color);
+  const bgColor = `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, 0.1)`;
+  const borderColor = `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, 0.25)`;
+  const glowColor = `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, 0.4)`;
+
   return (
     <div 
-      className="relative rounded-2xl overflow-hidden group cursor-pointer transition-all duration-300 hover:scale-[1.02] hover:shadow-xl"
+      className="relative rounded-2xl overflow-hidden group cursor-pointer transition-all duration-500 hover:scale-[1.03] hover:shadow-2xl border backdrop-blur-sm"
       style={{
-        background: `linear-gradient(135deg, ${color}15 0%, ${color}05 100%)`,
-        border: `1px solid ${color}30`,
+        backgroundColor: `rgba(255, 255, 255, 0.7)`,
+        borderColor: borderColor,
+        boxShadow: `0 4px 6px -1px ${borderColor}, 0 2px 4px -1px ${borderColor}20`,
       }}
     >
-      {/* Accent line */}
+      {/* Dark mode background */}
+      <div className="dark:bg-gray-800/80 dark:border-gray-700 absolute inset-0 rounded-2xl" />
+      
+      {/* Gradient accent bar */}
       <div 
-        className="absolute top-0 left-0 right-0 h-1"
-        style={{ backgroundColor: color }}
+        className="absolute top-0 left-0 right-0 h-1.5 opacity-90"
+        style={{ 
+          background: `linear-gradient(90deg, ${color}, ${color}cc, ${color})`,
+          boxShadow: `0 2px 8px ${glowColor}`,
+        }}
+      />
+
+      {/* Colored background overlay */}
+      <div 
+        className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500"
+        style={{
+          background: `radial-gradient(circle at top right, ${bgColor}, transparent 70%)`,
+        }}
       />
       
-      <div className="p-6">
+      {/* Content */}
+      <div className="relative z-10 p-6">
         <div className="flex flex-col">
-          <h3 className="text-xs font-semibold text-gray-500 dark:text-gray-400 mb-3 uppercase tracking-wider">
+          <h3 className="text-[10px] font-bold text-gray-600 dark:text-gray-400 mb-4 uppercase tracking-[0.15em] letter-spacing-wide">
             {title}
           </h3>
-          <div className="flex items-end gap-2 mb-2">
-            <p className="text-5xl font-extrabold text-clerky-backendText dark:text-gray-100 leading-none">
+          <div className="flex items-baseline gap-2 mb-2">
+            <p 
+              className="text-5xl font-black leading-none tracking-tight"
+              style={{ 
+                color: color,
+                textShadow: `0 2px 4px ${glowColor}40`,
+              }}
+            >
               {value}
             </p>
           </div>
           {subtitle && (
-            <p className="text-sm font-medium text-gray-600 dark:text-gray-300 mt-1">
+            <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 mt-2 opacity-90">
               {subtitle}
             </p>
           )}
         </div>
       </div>
 
-      {/* Hover effect overlay */}
-      <div 
-        className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none"
-        style={{
-          background: `linear-gradient(135deg, ${color}08 0%, transparent 100%)`,
+      {/* Decorative circle gradient */}
+      <div
+        className="absolute -bottom-12 -right-12 w-32 h-32 rounded-full opacity-20 group-hover:opacity-30 group-hover:scale-110 transition-all duration-500 blur-2xl"
+        style={{ backgroundColor: color }}
+      />
+      
+      {/* Shine effect on hover */}
+      <div
+        className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none"
+        style={{ 
+          background: `linear-gradient(135deg, transparent 0%, ${glowColor}15 50%, transparent 100%)`,
         }}
       />
     </div>
@@ -323,10 +368,10 @@ const ChartsSection: React.FC<ChartsSectionProps> = ({ stats }) => {
   const contactsByColumnData = useMemo(
     () =>
       stats.contacts.byColumn.map((col) => ({
-        name: t('dashboard.contacts.column', { id: col.columnId }),
+        name: col.columnName,
         value: col.count,
       })),
-    [stats.contacts.byColumn, t]
+    [stats.contacts.byColumn]
   );
 
   return (
@@ -371,25 +416,6 @@ const ChartsSection: React.FC<ChartsSectionProps> = ({ stats }) => {
 const NewsAndPromotions: React.FC = () => {
   const { t } = useLanguage();
 
-  // TODO: Carregar dados reais do Newsletter quando a API estiver disponível
-  // Por enquanto, exibir uma estrutura básica com conteúdo estático
-  const newsletterItems = [
-    {
-      id: 1,
-      type: 'news' as const,
-      title: t('dashboard.news.latestUpdate'),
-      description: t('dashboard.news.description'),
-      date: new Date().toLocaleDateString(),
-    },
-    {
-      id: 2,
-      type: 'promotion' as const,
-      title: t('dashboard.promotions.title'),
-      description: t('dashboard.promotions.description'),
-      date: new Date().toLocaleDateString(),
-    },
-  ];
-
   return (
     <Card padding="lg" shadow="md" className="transition-all duration-200">
       <div className="flex flex-col h-full">
@@ -397,38 +423,14 @@ const NewsAndPromotions: React.FC = () => {
           {t('dashboard.news.title')}
         </h2>
         
-        <div className="flex-1 space-y-4 max-h-[400px] overflow-y-auto">
-          {newsletterItems.map((item) => (
-            <div
-              key={item.id}
-              className="p-4 bg-gray-50 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
-            >
-              <div className="flex items-start justify-between mb-2">
-                <span
-                  className={`px-2 py-1 text-xs font-medium rounded ${
-                    item.type === 'news'
-                      ? 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200'
-                      : 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'
-                  }`}
-                >
-                  {item.type === 'news' ? t('dashboard.news.type.news') : t('dashboard.news.type.promotion')}
-                </span>
-                <span className="text-xs text-gray-500 dark:text-gray-400">{item.date}</span>
-              </div>
-              <h3 className="font-semibold text-clerky-backendText dark:text-gray-200 mb-2">
-                {item.title}
-              </h3>
-              <p className="text-sm text-gray-600 dark:text-gray-400 line-clamp-3">
-                {item.description}
-              </p>
-            </div>
-          ))}
-        </div>
-
-        <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
-          <p className="text-xs text-gray-500 dark:text-gray-400 text-center">
-            {t('dashboard.news.moreInfo')}
-          </p>
+        <div className="flex-1" style={{ minHeight: '500px' }}>
+          <iframe
+            src="https://clerky.com.br/app/Newsletter"
+            className="w-full h-full border-0 rounded-lg"
+            style={{ minHeight: '500px' }}
+            title={t('dashboard.news.title')}
+            sandbox="allow-same-origin allow-scripts allow-popups allow-forms"
+          />
         </div>
       </div>
     </Card>

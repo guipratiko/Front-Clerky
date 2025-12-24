@@ -886,10 +886,10 @@ export interface DashboardStats {
     connecting: number;
     error: number;
   };
-  contacts: {
-    total: number;
-    byColumn: Array<{ columnId: string; count: number }>;
-  };
+        contacts: {
+          total: number;
+          byColumn: Array<{ columnId: string; columnName: string; count: number }>;
+        };
   dispatches: {
     total: number;
     pending: number;
