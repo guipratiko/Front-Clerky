@@ -138,19 +138,27 @@ const GroupManager: React.FC = () => {
   // Atualizar grupos
   const refreshGroups = useCallback(async () => {
     if (!selectedInstance) return;
+    
+    // Evitar requisições simultâneas
+    if (isLoadingGroupsRef.current) {
+      return;
+    }
 
     try {
+      isLoadingGroupsRef.current = true;
       setIsRefreshing(true);
       setError(null);
       const response = await groupAPI.getAll(selectedInstance);
       setGroups(response.groups || []);
       setSuccessMessage(t('groupManager.success.refreshed'));
       setTimeout(() => setSuccessMessage(null), 3000);
+      lastGroupsUpdateRef.current = Date.now();
     } catch (error: unknown) {
       logError('Erro ao atualizar grupos', error);
       setError(getErrorMessage(error, t('groupManager.error.refreshGroups')));
     } finally {
       setIsRefreshing(false);
+      isLoadingGroupsRef.current = false;
     }
   }, [selectedInstance, t]);
 
@@ -919,12 +927,17 @@ const GroupManager: React.FC = () => {
     const now = Date.now();
     const timeSinceLastUpdate = now - lastGroupsUpdateRef.current;
 
-    // Se passou menos de 2 segundos desde a última atualização, aguardar
-    if (timeSinceLastUpdate < 2000) {
+    // Se passou menos de 5 segundos desde a última atualização, aguardar
+    // Aumentado para 5 segundos para evitar rate limiting
+    if (timeSinceLastUpdate < 5000) {
+      // Limpar timeout anterior se existir
+      if (groupsUpdateTimeoutRef.current) {
+        clearTimeout(groupsUpdateTimeoutRef.current);
+      }
       groupsUpdateTimeoutRef.current = setTimeout(() => {
         lastGroupsUpdateRef.current = Date.now();
         loadGroups();
-      }, 2000 - timeSinceLastUpdate);
+      }, 5000 - timeSinceLastUpdate);
       return;
     }
 
