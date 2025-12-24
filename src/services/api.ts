@@ -873,6 +873,8 @@ export interface Group {
   creation?: number;
   participants?: GroupParticipant[];
   pictureUrl?: string;
+  announcement?: boolean;
+  locked?: boolean;
 }
 
 // Group API
@@ -985,6 +987,17 @@ export const groupAPI = {
     return request<{ status: string; code: string; url: string }>(
       `/groups/invite-code?instanceId=${instanceId}&groupId=${encodeURIComponent(groupId)}`
     );
+  },
+
+  updateSettings: async (
+    instanceId: string,
+    groupId: string,
+    action: 'announcement' | 'not_announcement' | 'locked' | 'unlocked'
+  ): Promise<{ status: string; message: string }> => {
+    return request<{ status: string; message: string }>(`/groups/update-settings`, {
+      method: 'POST',
+      body: JSON.stringify({ instanceId, groupId, action }),
+    });
   },
 
   mentionEveryone: async (
