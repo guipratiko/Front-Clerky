@@ -95,14 +95,39 @@ const GroupManager: React.FC = () => {
 
   // Carregar grupos
   const loadGroups = useCallback(async () => {
-    if (!selectedInstance) return;
+    const loadId = `load-groups-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+    console.log(`[${loadId}] [FRONTEND] loadGroups chamado`, {
+      selectedInstance,
+      timestamp: new Date().toISOString(),
+      stackTrace: new Error().stack?.split('\n').slice(0, 5).join('\n'),
+    });
+    
+    if (!selectedInstance) {
+      console.log(`[${loadId}] [FRONTEND] loadGroups retornando: selectedInstance não definido`);
+      return;
+    }
 
     try {
       setIsLoading(true);
       setError(null);
+      const startTime = Date.now();
       const response = await groupAPI.getAll(selectedInstance);
+      const endTime = Date.now();
+      
+      console.log(`[${loadId}] [FRONTEND] loadGroups sucesso`, {
+        groupsCount: response.groups?.length || 0,
+        duration: `${endTime - startTime}ms`,
+        timestamp: new Date().toISOString(),
+        groups: response.groups?.map((g: Group) => ({
+          id: g.id,
+          name: g.name,
+          settings: g.settings,
+        })),
+      });
+      
       setGroups(response.groups || []);
     } catch (error: unknown) {
+      console.error(`[${loadId}] [FRONTEND] loadGroups erro:`, error);
       logError('Erro ao carregar grupos', error);
       setError(getErrorMessage(error, t('groupManager.error.loadGroups')));
     } finally {
@@ -541,17 +566,23 @@ const GroupManager: React.FC = () => {
     }
   };
 
-  // Atualizar configurações do grupo
-  const handleUpdateSettings = async () => {
+  // Atualizar configurações do grupo (chamada automática)
+  const handleUpdateSettings = async (newAnnouncement?: boolean, newLocked?: boolean) => {
     const callId = `update-settings-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+    
+    // Usar os valores passados como parâmetro ou os valores atuais do estado
+    const announcementToUpdate = newAnnouncement !== undefined ? newAnnouncement : announcement;
+    const lockedToUpdate = newLocked !== undefined ? newLocked : locked;
+
     console.log(`[${callId}] [FRONTEND] handleUpdateSettings chamado`, {
       editingGroup: editingGroup?.id,
       selectedInstance,
       isUpdatingSettings,
-      announcement,
-      locked,
+      announcement: announcementToUpdate,
+      locked: lockedToUpdate,
+      newAnnouncement,
+      newLocked,
       timestamp: new Date().toISOString(),
-      stackTrace: new Error().stack,
     });
 
     if (!editingGroup || !selectedInstance) {
@@ -564,17 +595,6 @@ const GroupManager: React.FC = () => {
       return;
     }
 
-    // Salvar os valores atuais antes de atualizar
-    const savedAnnouncement = announcement;
-    const savedLocked = locked;
-
-    console.log(`[${callId}] [FRONTEND] Valores salvos:`, {
-      savedAnnouncement,
-      savedLocked,
-      announcementType: typeof announcement,
-      lockedType: typeof locked,
-    });
-
     try {
       console.log(`[${callId}] [FRONTEND] Definindo isUpdatingSettings = true`);
       setIsUpdatingSettings(true);
@@ -582,12 +602,12 @@ const GroupManager: React.FC = () => {
       console.log(`[${callId}] [FRONTEND] Chamando groupAPI.updateSettings`, {
         instanceId: selectedInstance,
         groupId: editingGroup.id,
-        announcement: savedAnnouncement,
-        locked: savedLocked,
+        announcement: announcementToUpdate,
+        locked: lockedToUpdate,
       });
       
       const startTime = Date.now();
-      await groupAPI.updateSettings(selectedInstance, editingGroup.id, savedAnnouncement, savedLocked);
+      await groupAPI.updateSettings(selectedInstance, editingGroup.id, announcementToUpdate, lockedToUpdate);
       const endTime = Date.now();
       
       console.log(`[${callId}] [FRONTEND] groupAPI.updateSettings concluído`, {
@@ -603,20 +623,33 @@ const GroupManager: React.FC = () => {
       setEditingGroup({
         ...editingGroup,
         settings: {
-          announcement: savedAnnouncement,
-          locked: savedLocked,
+          announcement: announcementToUpdate,
+          locked: lockedToUpdate,
         },
       });
       
       // Recarregar grupos para atualizar a lista
       console.log(`[${callId}] [FRONTEND] Recarregando grupos`);
+      const loadGroupsStartTime = Date.now();
       await loadGroups();
+      const loadGroupsEndTime = Date.now();
+      console.log(`[${callId}] [FRONTEND] loadGroups concluído`, {
+        duration: `${loadGroupsEndTime - loadGroupsStartTime}ms`,
+        timestamp: new Date().toISOString(),
+      });
       
       console.log(`[${callId}] [FRONTEND] Processo completo finalizado com sucesso`);
     } catch (error: unknown) {
       console.error(`[${callId}] [FRONTEND] Erro ao atualizar configurações:`, error);
       logError('Erro ao atualizar configurações do grupo', error);
       alert(getErrorMessage(error, t('groupManager.error.updateSettings')));
+      // Reverter os valores em caso de erro
+      if (newAnnouncement !== undefined) {
+        setAnnouncement(!newAnnouncement);
+      }
+      if (newLocked !== undefined) {
+        setLocked(!newLocked);
+      }
     } finally {
       console.log(`[${callId}] [FRONTEND] Definindo isUpdatingSettings = false`);
       setIsUpdatingSettings(false);
@@ -1672,86 +1705,120 @@ const GroupManager: React.FC = () => {
                 )}
 
                 {editActiveTab === 'settings' && (
-                  <div className="space-y-4">
-                    <div className="flex items-center gap-2">
-                      <input
-                        type="checkbox"
-                        id="editAnnouncement"
-                        checked={announcement === true}
-                        onChange={(e) => {
-                          const newValue = e.target.checked;
-                          console.log('[FRONTEND] Checkbox announcement alterado:', {
-                            oldValue: announcement,
-                            newValue,
-                            timestamp: new Date().toISOString(),
-                          });
-                          setAnnouncement(newValue);
-                        }}
-                        className="w-4 h-4 text-clerky-backendButton border-gray-300 rounded focus:ring-clerky-backendButton"
-                      />
-                      <label htmlFor="editAnnouncement" className="text-sm text-gray-700 dark:text-gray-300">
-                        {t('groupManager.settings.announcement')}
-                      </label>
-                    </div>
-                    <p className="text-xs text-gray-500 dark:text-gray-400 ml-6">
-                      {t('groupManager.settings.announcementDescription')}
-                    </p>
-                    <div className="flex items-center gap-2">
-                      <input
-                        type="checkbox"
-                        id="editLocked"
-                        checked={locked === true}
-                        onChange={(e) => {
-                          const newValue = e.target.checked;
-                          console.log('[FRONTEND] Checkbox locked alterado:', {
-                            oldValue: locked,
-                            newValue,
-                            timestamp: new Date().toISOString(),
-                          });
-                          setLocked(newValue);
-                        }}
-                        className="w-4 h-4 text-clerky-backendButton border-gray-300 rounded focus:ring-clerky-backendButton"
-                      />
-                      <label htmlFor="editLocked" className="text-sm text-gray-700 dark:text-gray-300">
-                        {t('groupManager.settings.locked')}
-                      </label>
-                    </div>
-                    <p className="text-xs text-gray-500 dark:text-gray-400 ml-6">
-                      {t('groupManager.settings.lockedDescription')}
-                    </p>
-                    <div className="pt-4 border-t border-gray-200 dark:border-gray-700">
-                      <Button 
-                        onClick={(e) => {
-                          const clickId = `button-click-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
-                          console.log(`[${clickId}] [FRONTEND] Botão de atualizar configurações clicado`, {
-                            isUpdatingSettings,
-                            disabled: isUpdatingSettings,
-                            timestamp: new Date().toISOString(),
-                            event: {
-                              type: e.type,
-                              target: e.target,
-                              currentTarget: e.currentTarget,
-                            },
-                          });
-                          
-                          e.preventDefault();
-                          e.stopPropagation();
-                          
-                          if (isUpdatingSettings) {
-                            console.log(`[${clickId}] [FRONTEND] Clique ignorado: isUpdatingSettings é true`);
-                            return;
-                          }
-                          
-                          console.log(`[${clickId}] [FRONTEND] Chamando handleUpdateSettings`);
-                          handleUpdateSettings();
-                        }} 
-                        disabled={isUpdatingSettings} 
-                        className="w-full"
+                  <div className="space-y-6">
+                    {/* Toggle Switch para Announcement */}
+                    <div className="flex items-center justify-between p-4 border border-gray-200 dark:border-gray-700 rounded-lg">
+                      <div className="flex-1">
+                        <label htmlFor="editAnnouncement" className="text-sm font-medium text-gray-700 dark:text-gray-300 cursor-pointer">
+                          {t('groupManager.settings.announcement')}
+                        </label>
+                        <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                          {t('groupManager.settings.announcementDescription')}
+                        </p>
+                      </div>
+                      <button
                         type="button"
+                        id="editAnnouncement"
+                        onClick={async () => {
+                          if (isUpdatingSettings) return;
+                          
+                          const newValue = !announcement;
+                          const oldValue = announcement;
+                          
+                          console.log('[FRONTEND] Toggle announcement alterado:', {
+                            oldValue,
+                            newValue,
+                            timestamp: new Date().toISOString(),
+                          });
+                          
+                          // Atualizar estado local imediatamente para feedback visual
+                          setAnnouncement(newValue);
+                          
+                          // Chamar atualização automática
+                          try {
+                            await handleUpdateSettings(newValue, undefined);
+                          } catch (error) {
+                            // Reverter em caso de erro
+                            console.error('[FRONTEND] Erro ao atualizar announcement, revertendo:', error);
+                            setAnnouncement(oldValue);
+                          }
+                        }}
+                        disabled={isUpdatingSettings}
+                        className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-clerky-backendButton focus:ring-offset-2 ${
+                          announcement
+                            ? 'bg-clerky-backendButton'
+                            : 'bg-gray-300 dark:bg-gray-600'
+                        } ${isUpdatingSettings ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
                       >
-                        {isUpdatingSettings ? t('groupManager.updating') : t('groupManager.updateSettings')}
-                      </Button>
+                        <span
+                          className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                            announcement ? 'translate-x-6' : 'translate-x-1'
+                          }`}
+                        />
+                      </button>
                     </div>
+
+                    {/* Toggle Switch para Locked */}
+                    <div className="flex items-center justify-between p-4 border border-gray-200 dark:border-gray-700 rounded-lg">
+                      <div className="flex-1">
+                        <label htmlFor="editLocked" className="text-sm font-medium text-gray-700 dark:text-gray-300 cursor-pointer">
+                          {t('groupManager.settings.locked')}
+                        </label>
+                        <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                          {t('groupManager.settings.lockedDescription')}
+                        </p>
+                      </div>
+                      <button
+                        type="button"
+                        id="editLocked"
+                        onClick={async () => {
+                          if (isUpdatingSettings) return;
+                          
+                          const newValue = !locked;
+                          const oldValue = locked;
+                          
+                          console.log('[FRONTEND] Toggle locked alterado:', {
+                            oldValue,
+                            newValue,
+                            timestamp: new Date().toISOString(),
+                          });
+                          
+                          // Atualizar estado local imediatamente para feedback visual
+                          setLocked(newValue);
+                          
+                          // Chamar atualização automática
+                          try {
+                            await handleUpdateSettings(undefined, newValue);
+                          } catch (error) {
+                            // Reverter em caso de erro
+                            console.error('[FRONTEND] Erro ao atualizar locked, revertendo:', error);
+                            setLocked(oldValue);
+                          }
+                        }}
+                        disabled={isUpdatingSettings}
+                        className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-clerky-backendButton focus:ring-offset-2 ${
+                          locked
+                            ? 'bg-clerky-backendButton'
+                            : 'bg-gray-300 dark:bg-gray-600'
+                        } ${isUpdatingSettings ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
+                      >
+                        <span
+                          className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                            locked ? 'translate-x-6' : 'translate-x-1'
+                          }`}
+                        />
+                      </button>
+                    </div>
+
+                    {isUpdatingSettings && (
+                      <div className="flex items-center justify-center gap-2 text-sm text-gray-500 dark:text-gray-400">
+                        <svg className="animate-spin h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                        <span>{t('groupManager.updating')}</span>
+                      </div>
+                    )}
                   </div>
                 )}
               </div>
