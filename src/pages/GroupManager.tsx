@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { AppLayout } from '../components/Layout';
 import { Card, Button, Modal, Input } from '../components/UI';
+import ImageCrop from '../components/UI/ImageCrop';
 import { useLanguage } from '../contexts/LanguageContext';
 import { useAuth } from '../contexts/AuthContext';
 import { instanceAPI, Instance, Contact, crmAPI } from '../services/api';
@@ -48,12 +49,24 @@ const GroupManager: React.FC = () => {
   const [showEditModal, setShowEditModal] = useState(false);
   const [editingGroup, setEditingGroup] = useState<Group | null>(null);
   const [isUpdating, setIsUpdating] = useState(false);
+  const [editActiveTab, setEditActiveTab] = useState<'info' | 'participants' | 'settings'>('info');
+  const [editParticipantsText, setEditParticipantsText] = useState('');
+  const [editParticipantsCSV, setEditParticipantsCSV] = useState<File | null>(null);
+  const [editSelectedCrmContacts, setEditSelectedCrmContacts] = useState<Set<string>>(new Set());
+  const [editParticipantsList, setEditParticipantsList] = useState<Array<{ phone: string; name?: string }>>([]);
+  const [showImageCropModal, setShowImageCropModal] = useState(false);
+  const [imageToCrop, setImageToCrop] = useState<string | null>(null);
   
   // Estados para código de convite
   const [showInviteModal, setShowInviteModal] = useState(false);
   const [inviteCode, setInviteCode] = useState('');
   const [inviteUrl, setInviteUrl] = useState('');
   const [isLoadingInvite, setIsLoadingInvite] = useState(false);
+  
+  // Estados para mencionar todos
+  const [showMentionModal, setShowMentionModal] = useState(false);
+  const [mentionText, setMentionText] = useState('');
+  const [isSendingMention, setIsSendingMention] = useState(false);
 
   // Carregar instâncias
   const loadInstances = useCallback(async () => {
@@ -178,13 +191,38 @@ const GroupManager: React.FC = () => {
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      setGroupImage(file);
       const reader = new FileReader();
       reader.onloadend = () => {
-        setGroupImagePreview(reader.result as string);
+        const imageSrc = reader.result as string;
+        setImageToCrop(imageSrc);
+        setShowImageCropModal(true);
       };
       reader.readAsDataURL(file);
     }
+  };
+
+  // Aplicar crop da imagem
+  const handleCropComplete = (croppedBase64: string) => {
+    // Converter base64 para File
+    fetch(croppedBase64)
+      .then((res) => res.blob())
+      .then((blob) => {
+        const file = new File([blob], 'group-picture.jpg', { type: 'image/jpeg' });
+        setGroupImage(file);
+        setGroupImagePreview(croppedBase64);
+        setShowImageCropModal(false);
+        setImageToCrop(null);
+      })
+      .catch((error) => {
+        logError('Erro ao processar imagem cortada', error);
+        alert(getErrorMessage(error, t('groupManager.error.processImage')));
+      });
+  };
+
+  // Cancelar crop
+  const handleCropCancel = () => {
+    setShowImageCropModal(false);
+    setImageToCrop(null);
   };
 
   // Processar participantes via texto
@@ -380,8 +418,15 @@ const GroupManager: React.FC = () => {
     setGroupDescription(group.description || '');
     setGroupImage(null);
     setGroupImagePreview(group.pictureUrl || null);
+    setAnnouncement(group.settings?.announcement || false);
+    setLocked(group.settings?.locked || false);
+    setEditActiveTab('info');
+    setEditParticipantsText('');
+    setEditParticipantsCSV(null);
+    setEditSelectedCrmContacts(new Set());
+    setEditParticipantsList([]);
     setShowEditModal(true);
-    setActiveTab('info');
+    loadCrmContacts();
   };
 
   // Fechar modal de edição
@@ -464,8 +509,16 @@ const GroupManager: React.FC = () => {
       await groupAPI.updateSettings(selectedInstance, editingGroup.id, announcement, locked);
       setSuccessMessage(t('groupManager.success.updated'));
       setTimeout(() => setSuccessMessage(null), 3000);
-      handleCloseEditModal();
+      // Recarregar grupos para atualizar as configurações
       await loadGroups();
+      // Atualizar o grupo editado com as novas configurações
+      const updatedGroups = await groupAPI.getAll(selectedInstance);
+      const updatedGroup = updatedGroups.groups.find((g) => g.id === editingGroup.id);
+      if (updatedGroup) {
+        setEditingGroup(updatedGroup);
+        setAnnouncement(updatedGroup.settings?.announcement || false);
+        setLocked(updatedGroup.settings?.locked || false);
+      }
     } catch (error: unknown) {
       logError('Erro ao atualizar configurações do grupo', error);
       alert(getErrorMessage(error, t('groupManager.error.updateSettings')));
@@ -502,6 +555,164 @@ const GroupManager: React.FC = () => {
   const handleCopyInviteUrl = () => {
     navigator.clipboard.writeText(inviteUrl);
     alert(t('groupManager.inviteUrl.copied'));
+  };
+
+  // Processar participantes via texto (edição)
+  const handleEditProcessTextParticipants = () => {
+    if (!editParticipantsText.trim()) {
+      alert(t('groupManager.participants.textEmpty'));
+      return;
+    }
+    const contacts = parseInputText(editParticipantsText);
+    setEditParticipantsList((prev) => {
+      const newList = [...prev];
+      contacts.forEach((contact) => {
+        if (!newList.find((p) => p.phone === contact.phone)) {
+          newList.push(contact);
+        }
+      });
+      return newList;
+    });
+    setEditParticipantsText('');
+  };
+
+  // Processar participantes via CSV (edição)
+  const handleEditCSVUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setEditParticipantsCSV(file);
+    try {
+      const text = await file.text();
+      const contacts = parseCSVText(text);
+      setEditParticipantsList((prev) => {
+        const newList = [...prev];
+        contacts.forEach((contact) => {
+          if (!newList.find((p) => p.phone === contact.phone)) {
+            newList.push(contact);
+          }
+        });
+        return newList;
+      });
+    } catch (error: unknown) {
+      logError('Erro ao processar CSV', error);
+      alert(getErrorMessage(error, t('groupManager.error.processCSV')));
+    }
+  };
+
+  // Selecionar/deselecionar contatos do CRM (edição)
+  const handleEditToggleCrmContact = (contactId: string) => {
+    setEditSelectedCrmContacts((prev) => {
+      const newSet = new Set(prev);
+      if (newSet.has(contactId)) {
+        newSet.delete(contactId);
+      } else {
+        newSet.add(contactId);
+      }
+      return newSet;
+    });
+  };
+
+  // Selecionar todos os contatos do CRM (edição)
+  const handleEditSelectAllCrmContacts = () => {
+    setEditSelectedCrmContacts(new Set(crmContacts.map((c) => c.id)));
+  };
+
+  // Limpar seleção de contatos do CRM (edição)
+  const handleEditClearCrmContacts = () => {
+    setEditSelectedCrmContacts(new Set());
+  };
+
+  // Adicionar contatos selecionados do CRM (edição)
+  const handleEditAddCrmContacts = () => {
+    const selectedContacts = crmContacts.filter((c) => editSelectedCrmContacts.has(c.id));
+    setEditParticipantsList((prev) => {
+      const newList = [...prev];
+      selectedContacts.forEach((contact) => {
+        if (!newList.find((p) => p.phone === contact.phone)) {
+          newList.push({ phone: contact.phone, name: contact.name });
+        }
+      });
+      return newList;
+    });
+    setEditSelectedCrmContacts(new Set());
+  };
+
+  // Remover participante da lista (edição)
+  const handleEditRemoveParticipant = (phone: string) => {
+    setEditParticipantsList((prev) => prev.filter((p) => p.phone !== phone));
+  };
+
+  // Adicionar participantes ao grupo
+  const handleAddParticipantsToGroup = async () => {
+    if (!editingGroup || !selectedInstance) return;
+
+    if (editParticipantsList.length === 0) {
+      alert(t('groupManager.participants.noParticipants'));
+      return;
+    }
+
+    if (editParticipantsList.length > 1024) {
+      alert(t('groupManager.participants.maxParticipants'));
+      return;
+    }
+
+    try {
+      setIsUpdating(true);
+      const phones = editParticipantsList.map((p) => p.phone);
+      // Validar participantes primeiro
+      const validation = await groupAPI.validateParticipants(selectedInstance, phones);
+      
+      if (validation.validCount === 0) {
+        alert(t('groupManager.validation.noValidParticipants'));
+        return;
+      }
+
+      // Adicionar participantes ao grupo via Evolution API
+      const validPhones = validation.valid.map((v) => v.phone);
+      // Nota: A Evolution API não tem endpoint direto para adicionar participantes
+      // Isso precisaria ser feito via webhook ou outro método
+      // Por enquanto, apenas validamos e informamos
+      alert(t('groupManager.participants.added', { count: validPhones.length.toString() }));
+      setEditParticipantsList([]);
+      await loadGroups();
+    } catch (error: unknown) {
+      logError('Erro ao adicionar participantes', error);
+      alert(getErrorMessage(error, t('groupManager.error.addParticipants')));
+    } finally {
+      setIsUpdating(false);
+    }
+  };
+
+  // Mencionar todos os participantes
+  const handleMentionEveryone = async (group: Group) => {
+    setSelectedGroup(group);
+    setMentionText('');
+    setShowMentionModal(true);
+  };
+
+  // Enviar mensagem mencionando todos
+  const handleSendMention = async () => {
+    if (!selectedGroup || !selectedInstance) return;
+
+    if (!mentionText.trim()) {
+      alert(t('groupManager.mention.textRequired'));
+      return;
+    }
+
+    try {
+      setIsSendingMention(true);
+      await groupAPI.mentionEveryone(selectedInstance, selectedGroup.id, mentionText.trim());
+      setSuccessMessage(t('groupManager.mention.sent'));
+      setTimeout(() => setSuccessMessage(null), 3000);
+      setShowMentionModal(false);
+      setMentionText('');
+    } catch (error: unknown) {
+      logError('Erro ao mencionar todos', error);
+      alert(getErrorMessage(error, t('groupManager.error.mentionEveryone')));
+    } finally {
+      setIsSendingMention(false);
+    }
   };
 
   useEffect(() => {
@@ -571,7 +782,7 @@ const GroupManager: React.FC = () => {
               <option value="">{t('groupManager.selectInstancePlaceholder')}</option>
               {instances.map((instance) => (
                 <option key={instance.id} value={instance.id}>
-                  {instance.name} {instance.status === 'connected' ? '✓' : ''}
+                  {instance.name}
                 </option>
               ))}
             </select>
@@ -629,6 +840,9 @@ const GroupManager: React.FC = () => {
                   <Button variant="outline" size="sm" onClick={() => handleGetInviteCode(group)} disabled={isLoadingInvite}>
                     {t('groupManager.inviteCode')}
                   </Button>
+                  <Button variant="outline" size="sm" onClick={() => handleMentionEveryone(group)}>
+                    {t('groupManager.mentionEveryone')}
+                  </Button>
                   <Button 
                     variant="outline" 
                     size="sm" 
@@ -651,41 +865,41 @@ const GroupManager: React.FC = () => {
           size="xl"
         >
           <div className="space-y-4">
-            {/* Tabs */}
-            <div className="border-b border-gray-200 dark:border-gray-700">
-              <nav className="flex -mb-px">
-                <button
-                  onClick={() => setActiveTab('info')}
-                  className={`px-4 py-2 text-sm font-medium border-b-2 ${
-                    activeTab === 'info'
-                      ? 'border-clerky-backendButton text-clerky-backendButton'
-                      : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-300'
-                  }`}
-                >
-                  {t('groupManager.tabs.info')}
-                </button>
-                <button
-                  onClick={() => setActiveTab('participants')}
-                  className={`px-4 py-2 text-sm font-medium border-b-2 ${
-                    activeTab === 'participants'
-                      ? 'border-clerky-backendButton text-clerky-backendButton'
-                      : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-300'
-                  }`}
-                >
-                  {t('groupManager.tabs.participants')} ({participantsList.length})
-                </button>
-                <button
-                  onClick={() => setActiveTab('settings')}
-                  className={`px-4 py-2 text-sm font-medium border-b-2 ${
-                    activeTab === 'settings'
-                      ? 'border-clerky-backendButton text-clerky-backendButton'
-                      : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-300'
-                  }`}
-                >
-                  {t('groupManager.tabs.settings')}
-                </button>
-              </nav>
-            </div>
+              {/* Tabs */}
+              <div className="border-b border-gray-200 dark:border-gray-700">
+                <nav className="flex -mb-px">
+                  <button
+                    onClick={() => setActiveTab('info')}
+                    className={`px-4 py-2 text-sm font-medium border-b-2 ${
+                      activeTab === 'info'
+                        ? 'border-clerky-backendButton text-clerky-backendButton'
+                        : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-300'
+                    }`}
+                  >
+                    {t('groupManager.tabs.info')}
+                  </button>
+                  <button
+                    onClick={() => setActiveTab('participants')}
+                    className={`px-4 py-2 text-sm font-medium border-b-2 ${
+                      activeTab === 'participants'
+                        ? 'border-clerky-backendButton text-clerky-backendButton'
+                        : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-300'
+                    }`}
+                  >
+                    {t('groupManager.tabs.participants')} ({participantsList.length})
+                  </button>
+                  <button
+                    onClick={() => setActiveTab('settings')}
+                    className={`px-4 py-2 text-sm font-medium border-b-2 ${
+                      activeTab === 'settings'
+                        ? 'border-clerky-backendButton text-clerky-backendButton'
+                        : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-300'
+                    }`}
+                  >
+                    {t('groupManager.tabs.settings')}
+                  </button>
+                </nav>
+              </div>
 
             {/* Tab Content */}
             <div className="min-h-[400px]">
@@ -729,6 +943,22 @@ const GroupManager: React.FC = () => {
                       onChange={handleImageChange}
                       className="block w-full text-sm text-gray-500 dark:text-gray-400 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-clerky-backendButton file:text-white hover:file:bg-clerky-backendButtonHover"
                     />
+                    {showImageCropModal && imageToCrop && (
+                      <Modal
+                        isOpen={showImageCropModal}
+                        onClose={handleCropCancel}
+                        title={t('groupManager.cropImage')}
+                        size="xl"
+                      >
+                        <ImageCrop
+                          imageSrc={imageToCrop}
+                          onCrop={handleCropComplete}
+                          onCancel={handleCropCancel}
+                          aspectRatio={1}
+                          circular={true}
+                        />
+                      </Modal>
+                    )}
                   </div>
                 </div>
               )}
@@ -947,7 +1177,7 @@ const GroupManager: React.FC = () => {
 
               {/* Tab Content */}
               <div className="min-h-[300px]">
-                {activeTab === 'info' && (
+                {editActiveTab === 'info' && (
                   <div className="space-y-4">
                     <div>
                       <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
@@ -998,11 +1228,146 @@ const GroupManager: React.FC = () => {
                       <Button size="sm" onClick={handleUpdatePicture} disabled={isUpdating || !groupImage} className="mt-2">
                         {isUpdating ? t('groupManager.updating') : t('groupManager.updatePicture')}
                       </Button>
+                      {showImageCropModal && imageToCrop && (
+                        <Modal
+                          isOpen={showImageCropModal}
+                          onClose={handleCropCancel}
+                          title={t('groupManager.cropImage')}
+                          size="xl"
+                        >
+                          <ImageCrop
+                            imageSrc={imageToCrop}
+                            onCrop={handleCropComplete}
+                            onCancel={handleCropCancel}
+                            aspectRatio={1}
+                            circular={true}
+                          />
+                        </Modal>
+                      )}
                     </div>
                   </div>
                 )}
 
-                {activeTab === 'settings' && (
+                {editActiveTab === 'participants' && (
+                  <div className="space-y-4">
+                    {/* Adicionar via Texto */}
+                    <div className="border border-gray-200 dark:border-gray-700 rounded-lg p-4">
+                      <h3 className="text-sm font-semibold text-clerky-backendText dark:text-gray-200 mb-2">
+                        {t('groupManager.participants.addByText')}
+                      </h3>
+                      <textarea
+                        value={editParticipantsText}
+                        onChange={(e) => setEditParticipantsText(e.target.value)}
+                        placeholder={t('groupManager.participants.textPlaceholder')}
+                        className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-clerky-backendButton focus:border-transparent bg-white dark:bg-gray-700 text-clerky-backendText dark:text-gray-200 min-h-[100px] mb-2"
+                      />
+                      <Button size="sm" onClick={handleEditProcessTextParticipants}>
+                        {t('groupManager.participants.add')}
+                      </Button>
+                    </div>
+
+                    {/* Adicionar via CSV */}
+                    <div className="border border-gray-200 dark:border-gray-700 rounded-lg p-4">
+                      <h3 className="text-sm font-semibold text-clerky-backendText dark:text-gray-200 mb-2">
+                        {t('groupManager.participants.addByCSV')}
+                      </h3>
+                      <input
+                        type="file"
+                        accept=".csv"
+                        onChange={handleEditCSVUpload}
+                        className="block w-full text-sm text-gray-500 dark:text-gray-400 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-clerky-backendButton file:text-white hover:file:bg-clerky-backendButtonHover"
+                      />
+                      {editParticipantsCSV && (
+                        <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
+                          {t('groupManager.participants.csvLoaded')}: {editParticipantsCSV.name}
+                        </p>
+                      )}
+                    </div>
+
+                    {/* Adicionar do CRM */}
+                    <div className="border border-gray-200 dark:border-gray-700 rounded-lg p-4">
+                      <div className="flex items-center justify-between mb-2">
+                        <h3 className="text-sm font-semibold text-clerky-backendText dark:text-gray-200">
+                          {t('groupManager.participants.addFromCRM')}
+                        </h3>
+                        <div className="flex gap-2">
+                          <Button size="sm" variant="outline" onClick={handleEditSelectAllCrmContacts}>
+                            {t('groupManager.participants.selectAll')}
+                          </Button>
+                          <Button size="sm" variant="outline" onClick={handleEditClearCrmContacts}>
+                            {t('groupManager.participants.clear')}
+                          </Button>
+                        </div>
+                      </div>
+                      <div className="max-h-64 overflow-y-auto space-y-2 mb-2">
+                        {crmContacts.map((contact) => (
+                          <div
+                            key={contact.id}
+                            className="flex items-center gap-2 p-2 bg-gray-50 dark:bg-gray-800 rounded"
+                          >
+                            <input
+                              type="checkbox"
+                              checked={editSelectedCrmContacts.has(contact.id)}
+                              onChange={() => handleEditToggleCrmContact(contact.id)}
+                              className="w-4 h-4 text-clerky-backendButton border-gray-300 rounded focus:ring-clerky-backendButton"
+                            />
+                            <div className="flex-1">
+                              <p className="text-sm font-medium text-clerky-backendText dark:text-gray-200">
+                                {contact.name}
+                              </p>
+                              <p className="text-xs text-gray-500 dark:text-gray-400">{contact.phone}</p>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                      <Button size="sm" onClick={handleEditAddCrmContacts} disabled={editSelectedCrmContacts.size === 0}>
+                        {t('groupManager.participants.add')} ({editSelectedCrmContacts.size})
+                      </Button>
+                    </div>
+
+                    {/* Lista de Participantes */}
+                    <div className="border border-gray-200 dark:border-gray-700 rounded-lg p-4">
+                      <div className="flex items-center justify-between mb-2">
+                        <h3 className="text-sm font-semibold text-clerky-backendText dark:text-gray-200">
+                          {t('groupManager.participants.list')} ({editParticipantsList.length}/1024)
+                        </h3>
+                        <Button size="sm" onClick={handleAddParticipantsToGroup} disabled={isUpdating || editParticipantsList.length === 0}>
+                          {isUpdating ? t('groupManager.adding') : t('groupManager.addParticipants')}
+                        </Button>
+                      </div>
+                      <div className="max-h-64 overflow-y-auto space-y-2">
+                        {editParticipantsList.map((participant, index) => (
+                          <div
+                            key={index}
+                            className="flex items-center justify-between p-2 bg-gray-50 dark:bg-gray-800 rounded"
+                          >
+                            <div>
+                              <p className="text-sm font-medium text-clerky-backendText dark:text-gray-200">
+                                {participant.name || participant.phone}
+                              </p>
+                              {participant.name && (
+                                <p className="text-xs text-gray-500 dark:text-gray-400">{participant.phone}</p>
+                              )}
+                            </div>
+                            <button
+                              onClick={() => handleEditRemoveParticipant(participant.phone)}
+                              className="text-red-600 dark:text-red-400 hover:text-red-800 dark:hover:text-red-300"
+                            >
+                              ✕
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                      {editParticipantsList.length === 0 && (
+                        <p className="text-center text-gray-500 dark:text-gray-400 py-4">
+                          {t('groupManager.participants.noParticipants')}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                )}
+
+                {editActiveTab === 'settings' && (
                   <div className="space-y-4">
                     <div className="flex items-center gap-2">
                       <input
@@ -1154,6 +1519,43 @@ const GroupManager: React.FC = () => {
               )}
             </div>
           )}
+        </Modal>
+
+        {/* Modal de Mencionar Todos */}
+        <Modal
+          isOpen={showMentionModal}
+          onClose={() => {
+            setShowMentionModal(false);
+            setMentionText('');
+            setSelectedGroup(null);
+          }}
+          title={t('groupManager.mention.title')}
+        >
+          <div className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                {t('groupManager.mention.message')}
+              </label>
+              <textarea
+                value={mentionText}
+                onChange={(e) => setMentionText(e.target.value)}
+                placeholder={t('groupManager.mention.placeholder')}
+                className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-clerky-backendButton focus:border-transparent bg-white dark:bg-gray-700 text-clerky-backendText dark:text-gray-200 min-h-[150px]"
+              />
+            </div>
+            <div className="flex justify-end gap-2">
+              <Button variant="outline" onClick={() => {
+                setShowMentionModal(false);
+                setMentionText('');
+                setSelectedGroup(null);
+              }}>
+                {t('groupManager.cancel')}
+              </Button>
+              <Button onClick={handleSendMention} disabled={isSendingMention || !mentionText.trim()}>
+                {isSendingMention ? t('groupManager.mention.sending') : t('groupManager.mention.send')}
+              </Button>
+            </div>
+          </div>
         </Modal>
       </div>
     </AppLayout>

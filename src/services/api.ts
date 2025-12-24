@@ -1002,6 +1002,17 @@ export const groupAPI = {
       body: JSON.stringify({ instanceId, groupId, announcement, locked }),
     });
   },
+
+  mentionEveryone: async (
+    instanceId: string,
+    groupId: string,
+    text: string
+  ): Promise<{ status: string; message: string }> => {
+    return request<{ status: string; message: string }>(`/groups/mention-everyone`, {
+      method: 'POST',
+      body: JSON.stringify({ instanceId, groupId, text }),
+    });
+  },
 };
 
 const api = { authAPI, instanceAPI, crmAPI, dispatchAPI, workflowAPI, aiAgentAPI, groupAPI };
