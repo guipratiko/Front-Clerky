@@ -429,8 +429,9 @@ const GroupManager: React.FC = () => {
     setGroupDescription(group.description || '');
     setGroupImage(null);
     setGroupImagePreview(group.pictureUrl || null);
-    setAnnouncement(group.settings?.announcement || false);
-    setLocked(group.settings?.locked || false);
+    // Usar valores explícitos do servidor, não defaults
+    setAnnouncement(group.settings?.announcement === true);
+    setLocked(group.settings?.locked === true);
     setEditActiveTab('info');
     setEditParticipantsText('');
     setEditParticipantsCSV(null);
@@ -518,26 +519,31 @@ const GroupManager: React.FC = () => {
   const handleUpdateSettings = async () => {
     if (!editingGroup || !selectedInstance) return;
 
+    // Salvar os valores atuais antes de atualizar
+    const savedAnnouncement = announcement;
+    const savedLocked = locked;
+
     try {
       setIsUpdating(true);
       await groupAPI.updateSettings(selectedInstance, editingGroup.id, announcement, locked);
       setSuccessMessage(t('groupManager.success.updated'));
       setTimeout(() => setSuccessMessage(null), 3000);
-      // Recarregar grupos para atualizar as configurações
+      
+      // Atualizar o grupo editado com as novas configurações imediatamente
+      // Isso garante que o estado local reflete o que foi salvo
+      setEditingGroup({
+        ...editingGroup,
+        settings: {
+          announcement: savedAnnouncement,
+          locked: savedLocked,
+        },
+      });
+      
+      // Manter os estados locais com os valores que foram salvos
+      // Não alterar aqui, pois os valores já estão corretos
+      
+      // Recarregar grupos para atualizar a lista (mas não alterar o estado do modal)
       await loadGroups();
-      // Aguardar um pouco para garantir que a API atualizou
-      await new Promise(resolve => setTimeout(resolve, 500));
-      // Atualizar o grupo editado com as novas configurações
-      const updatedGroups = await groupAPI.getAll(selectedInstance);
-      const updatedGroup = updatedGroups.groups.find((g) => g.id === editingGroup.id);
-      if (updatedGroup) {
-        setEditingGroup(updatedGroup);
-        // Atualizar os estados com os valores reais do servidor
-        const newAnnouncement = updatedGroup.settings?.announcement === true;
-        const newLocked = updatedGroup.settings?.locked === true;
-        setAnnouncement(newAnnouncement);
-        setLocked(newLocked);
-      }
     } catch (error: unknown) {
       logError('Erro ao atualizar configurações do grupo', error);
       alert(getErrorMessage(error, t('groupManager.error.updateSettings')));
