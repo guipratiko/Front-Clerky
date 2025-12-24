@@ -67,6 +67,17 @@ const GroupManager: React.FC = () => {
   const [showMentionModal, setShowMentionModal] = useState(false);
   const [mentionText, setMentionText] = useState('');
   const [isSendingMention, setIsSendingMention] = useState(false);
+  
+  // Estados para edição em massa
+  const [showBulkEditModal, setShowBulkEditModal] = useState(false);
+  const [selectedGroups, setSelectedGroups] = useState<Set<string>>(new Set());
+  const [bulkImage, setBulkImage] = useState<File | null>(null);
+  const [bulkImagePreview, setBulkImagePreview] = useState<string | null>(null);
+  const [bulkDescription, setBulkDescription] = useState('');
+  const [bulkMentionText, setBulkMentionText] = useState('');
+  const [bulkAnnouncement, setBulkAnnouncement] = useState<boolean | undefined>(undefined);
+  const [bulkLocked, setBulkLocked] = useState<boolean | undefined>(undefined);
+  const [isBulkUpdating, setIsBulkUpdating] = useState(false);
 
   // Carregar instâncias
   const loadInstances = useCallback(async () => {
@@ -437,6 +448,9 @@ const GroupManager: React.FC = () => {
     setGroupDescription('');
     setGroupImage(null);
     setGroupImagePreview(null);
+    setAnnouncement(false);
+    setLocked(false);
+    setEditActiveTab('info');
   };
 
   // Atualizar nome do grupo
@@ -715,6 +729,157 @@ const GroupManager: React.FC = () => {
     }
   };
 
+  // Selecionar/deselecionar grupo para edição em massa
+  const handleToggleGroupSelection = (groupId: string) => {
+    setSelectedGroups((prev) => {
+      const newSet = new Set(prev);
+      if (newSet.has(groupId)) {
+        newSet.delete(groupId);
+      } else {
+        newSet.add(groupId);
+      }
+      return newSet;
+    });
+  };
+
+  // Selecionar todos os grupos
+  const handleSelectAllGroups = () => {
+    setSelectedGroups(new Set(groups.map((g) => g.id)));
+  };
+
+  // Limpar seleção de grupos
+  const handleClearGroupSelection = () => {
+    setSelectedGroups(new Set());
+  };
+
+  // Processar imagem para edição em massa
+  const handleBulkImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        const imageSrc = reader.result as string;
+        setImageToCrop(imageSrc);
+        setShowImageCropModal(true);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  // Aplicar crop da imagem em massa
+  const handleBulkCropComplete = (croppedBase64: string) => {
+    fetch(croppedBase64)
+      .then((res) => res.blob())
+      .then((blob) => {
+        const file = new File([blob], 'group-picture.jpg', { type: 'image/jpeg' });
+        setBulkImage(file);
+        setBulkImagePreview(croppedBase64);
+        setShowImageCropModal(false);
+        setImageToCrop(null);
+      })
+      .catch((error) => {
+        logError('Erro ao processar imagem', error);
+        alert(getErrorMessage(error, t('groupManager.error.processImage')));
+      });
+  };
+
+  // Aplicar edições em massa
+  const handleBulkUpdate = async () => {
+    if (!selectedInstance || selectedGroups.size === 0) return;
+
+    const groupIds = Array.from(selectedGroups);
+    if (groupIds.length === 0) {
+      alert(t('groupManager.bulkEdit.noGroupsSelected'));
+      return;
+    }
+
+    try {
+      setIsBulkUpdating(true);
+      let successCount = 0;
+      let errorCount = 0;
+
+      // Atualizar foto
+      if (bulkImage) {
+        for (const groupId of groupIds) {
+          try {
+            await groupAPI.updatePicture(selectedInstance, groupId, bulkImage);
+            successCount++;
+          } catch (error) {
+            errorCount++;
+            logError(`Erro ao atualizar foto do grupo ${groupId}`, error);
+          }
+        }
+      }
+
+      // Atualizar descrição
+      if (bulkDescription.trim()) {
+        for (const groupId of groupIds) {
+          try {
+            await groupAPI.updateDescription(selectedInstance, groupId, bulkDescription.trim());
+            successCount++;
+          } catch (error) {
+            errorCount++;
+            logError(`Erro ao atualizar descrição do grupo ${groupId}`, error);
+          }
+        }
+      }
+
+      // Mencionar todos
+      if (bulkMentionText.trim()) {
+        for (const groupId of groupIds) {
+          try {
+            await groupAPI.mentionEveryone(selectedInstance, groupId, bulkMentionText.trim());
+            successCount++;
+          } catch (error) {
+            errorCount++;
+            logError(`Erro ao mencionar todos no grupo ${groupId}`, error);
+          }
+        }
+      }
+
+      // Atualizar configurações
+      if (bulkAnnouncement !== undefined || bulkLocked !== undefined) {
+        for (const groupId of groupIds) {
+          try {
+            await groupAPI.updateSettings(
+              selectedInstance,
+              groupId,
+              bulkAnnouncement,
+              bulkLocked
+            );
+            successCount++;
+          } catch (error) {
+            errorCount++;
+            logError(`Erro ao atualizar configurações do grupo ${groupId}`, error);
+          }
+        }
+      }
+
+      if (successCount > 0) {
+        setSuccessMessage(t('groupManager.bulkEdit.success', { count: successCount.toString() }));
+        setTimeout(() => setSuccessMessage(null), 5000);
+      }
+      if (errorCount > 0) {
+        alert(t('groupManager.bulkEdit.errors', { count: errorCount.toString() }));
+      }
+
+      setShowBulkEditModal(false);
+      setSelectedGroups(new Set());
+      setBulkImage(null);
+      setBulkImagePreview(null);
+      setBulkDescription('');
+      setBulkMentionText('');
+      setBulkAnnouncement(undefined);
+      setBulkLocked(undefined);
+      await loadGroups();
+    } catch (error: unknown) {
+      logError('Erro ao aplicar edições em massa', error);
+      alert(getErrorMessage(error, t('groupManager.error.bulkUpdate')));
+    } finally {
+      setIsBulkUpdating(false);
+    }
+  };
+
   useEffect(() => {
     if (token) {
       loadInstances();
@@ -748,6 +913,11 @@ const GroupManager: React.FC = () => {
             <Button onClick={handleOpenCreateModal} disabled={!selectedInstance}>
               {t('groupManager.createGroup')}
             </Button>
+            {groups.length > 0 && (
+              <Button variant="outline" onClick={() => setShowBulkEditModal(true)} disabled={!selectedInstance}>
+                {t('groupManager.bulkEdit')}
+              </Button>
+            )}
             <Button variant="outline" onClick={refreshGroups} disabled={isRefreshing || !selectedInstance}>
               {isRefreshing ? t('groupManager.refreshing') : t('groupManager.refresh')}
             </Button>
@@ -811,43 +981,77 @@ const GroupManager: React.FC = () => {
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {groups.map((group) => (
-              <Card key={group.id} padding="md" className="flex flex-col justify-between">
-                <div>
-                  <h3 className="text-lg font-semibold text-clerky-backendText dark:text-gray-200 mb-2">
+              <Card key={group.id} padding="md" className="flex flex-col h-full">
+                <div className="flex-1">
+                  {/* Foto do Grupo */}
+                  <div className="mb-3 flex items-center justify-center">
+                    {group.pictureUrl ? (
+                      <img
+                        src={group.pictureUrl}
+                        alt={group.name || 'Grupo'}
+                        className="w-20 h-20 rounded-full object-cover border-2 border-gray-200 dark:border-gray-700"
+                      />
+                    ) : (
+                      <div className="w-20 h-20 rounded-full bg-gradient-to-br from-clerky-backendButton to-clerky-backendButtonHover flex items-center justify-center text-white text-2xl font-bold">
+                        {(group.name || group.id).charAt(0).toUpperCase()}
+                      </div>
+                    )}
+                  </div>
+                  
+                  {/* Nome do Grupo */}
+                  <h3 className="text-lg font-semibold text-clerky-backendText dark:text-gray-200 mb-2 text-center">
                     {group.name || group.id}
                   </h3>
+                  
+                  {/* Descrição */}
                   {group.description && (
-                    <p className="text-sm text-gray-600 dark:text-gray-400 mb-2 line-clamp-2">
+                    <p className="text-sm text-gray-600 dark:text-gray-400 mb-3 line-clamp-3 text-center min-h-[3rem]">
                       {group.description}
                     </p>
                   )}
-                  <div className="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-500 mb-2">
-                    <span>{t('groupManager.participants')}: {group.participants?.length || 0}</span>
+                  
+                  {/* Informações */}
+                  <div className="flex items-center justify-center gap-4 text-xs text-gray-500 dark:text-gray-500 mb-3">
+                    <span className="flex items-center gap-1">
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                      </svg>
+                      {group.participants?.length || 0}
+                    </span>
+                    {group.creation && (
+                      <span className="flex items-center gap-1">
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                        </svg>
+                        {new Date(group.creation).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' })}
+                      </span>
+                    )}
                   </div>
-                  {group.creation && (
-                    <p className="text-xs text-gray-400 dark:text-gray-500">
-                      {t('groupManager.created')}: {new Date(group.creation).toLocaleDateString()}
-                    </p>
-                  )}
                 </div>
-                <div className="flex gap-2 mt-4 flex-wrap">
-                  <Button variant="outline" size="sm" onClick={() => handleViewGroupDetails(group)}>
-                    {t('groupManager.viewDetails')}
-                  </Button>
-                  <Button variant="outline" size="sm" onClick={() => handleOpenEditModal(group)}>
-                    {t('groupManager.edit')}
-                  </Button>
-                  <Button variant="outline" size="sm" onClick={() => handleGetInviteCode(group)} disabled={isLoadingInvite}>
-                    {t('groupManager.inviteCode')}
-                  </Button>
-                  <Button variant="outline" size="sm" onClick={() => handleMentionEveryone(group)}>
-                    {t('groupManager.mentionEveryone')}
-                  </Button>
+                
+                {/* Botões */}
+                <div className="flex flex-col gap-2 mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
+                  <div className="grid grid-cols-2 gap-2">
+                    <Button variant="outline" size="sm" onClick={() => handleViewGroupDetails(group)} className="text-xs">
+                      {t('groupManager.viewDetails')}
+                    </Button>
+                    <Button variant="outline" size="sm" onClick={() => handleOpenEditModal(group)} className="text-xs">
+                      {t('groupManager.edit')}
+                    </Button>
+                  </div>
+                  <div className="grid grid-cols-2 gap-2">
+                    <Button variant="outline" size="sm" onClick={() => handleGetInviteCode(group)} disabled={isLoadingInvite} className="text-xs">
+                      {t('groupManager.inviteCode')}
+                    </Button>
+                    <Button variant="outline" size="sm" onClick={() => handleMentionEveryone(group)} className="text-xs">
+                      {t('groupManager.mentionEveryone')}
+                    </Button>
+                  </div>
                   <Button 
                     variant="outline" 
                     size="sm" 
                     onClick={() => handleLeaveGroup(group.id)}
-                    className="border-red-500 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 hover:border-red-600 dark:hover:border-red-500"
+                    className="border-red-500 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 hover:border-red-600 dark:hover:border-red-500 text-xs"
                   >
                     {t('groupManager.leave')}
                   </Button>
@@ -1153,9 +1357,9 @@ const GroupManager: React.FC = () => {
               <div className="border-b border-gray-200 dark:border-gray-700">
                 <nav className="flex -mb-px">
                   <button
-                    onClick={() => setActiveTab('info')}
+                    onClick={() => setEditActiveTab('info')}
                     className={`px-4 py-2 text-sm font-medium border-b-2 ${
-                      activeTab === 'info'
+                      editActiveTab === 'info'
                         ? 'border-clerky-backendButton text-clerky-backendButton'
                         : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-300'
                     }`}
@@ -1163,9 +1367,19 @@ const GroupManager: React.FC = () => {
                     {t('groupManager.tabs.info')}
                   </button>
                   <button
-                    onClick={() => setActiveTab('settings')}
+                    onClick={() => setEditActiveTab('participants')}
                     className={`px-4 py-2 text-sm font-medium border-b-2 ${
-                      activeTab === 'settings'
+                      editActiveTab === 'participants'
+                        ? 'border-clerky-backendButton text-clerky-backendButton'
+                        : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-300'
+                    }`}
+                  >
+                    {t('groupManager.tabs.participants')}
+                  </button>
+                  <button
+                    onClick={() => setEditActiveTab('settings')}
+                    className={`px-4 py-2 text-sm font-medium border-b-2 ${
+                      editActiveTab === 'settings'
                         ? 'border-clerky-backendButton text-clerky-backendButton'
                         : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-300'
                     }`}
@@ -1399,9 +1613,11 @@ const GroupManager: React.FC = () => {
                     <p className="text-xs text-gray-500 dark:text-gray-400 ml-6">
                       {t('groupManager.settings.lockedDescription')}
                     </p>
-                    <Button onClick={handleUpdateSettings} disabled={isUpdating}>
-                      {isUpdating ? t('groupManager.updating') : t('groupManager.updateSettings')}
-                    </Button>
+                    <div className="pt-4 border-t border-gray-200 dark:border-gray-700">
+                      <Button onClick={handleUpdateSettings} disabled={isUpdating} className="w-full">
+                        {isUpdating ? t('groupManager.updating') : t('groupManager.updateSettings')}
+                      </Button>
+                    </div>
                   </div>
                 )}
               </div>
@@ -1553,6 +1769,187 @@ const GroupManager: React.FC = () => {
               </Button>
               <Button onClick={handleSendMention} disabled={isSendingMention || !mentionText.trim()}>
                 {isSendingMention ? t('groupManager.mention.sending') : t('groupManager.mention.send')}
+              </Button>
+            </div>
+          </div>
+        </Modal>
+
+        {/* Modal de Edição em Massa */}
+        <Modal
+          isOpen={showBulkEditModal}
+          onClose={() => {
+            setShowBulkEditModal(false);
+            setSelectedGroups(new Set());
+            setBulkImage(null);
+            setBulkImagePreview(null);
+            setBulkDescription('');
+            setBulkMentionText('');
+            setBulkAnnouncement(undefined);
+            setBulkLocked(undefined);
+          }}
+          title={t('groupManager.bulkEdit.title')}
+          size="xl"
+        >
+          <div className="space-y-4">
+            {/* Seleção de Grupos */}
+            <div className="border border-gray-200 dark:border-gray-700 rounded-lg p-4">
+              <div className="flex items-center justify-between mb-3">
+                <h3 className="text-sm font-semibold text-clerky-backendText dark:text-gray-200">
+                  {t('groupManager.bulkEdit.selectGroups')} ({selectedGroups.size}/{groups.length})
+                </h3>
+                <div className="flex gap-2">
+                  <Button size="sm" variant="outline" onClick={handleSelectAllGroups}>
+                    {t('groupManager.participants.selectAll')}
+                  </Button>
+                  <Button size="sm" variant="outline" onClick={handleClearGroupSelection}>
+                    {t('groupManager.participants.clear')}
+                  </Button>
+                </div>
+              </div>
+              <div className="max-h-48 overflow-y-auto space-y-2">
+                {groups.map((group) => (
+                  <div
+                    key={group.id}
+                    className="flex items-center gap-2 p-2 bg-gray-50 dark:bg-gray-800 rounded"
+                  >
+                    <input
+                      type="checkbox"
+                      checked={selectedGroups.has(group.id)}
+                      onChange={() => handleToggleGroupSelection(group.id)}
+                      className="w-4 h-4 text-clerky-backendButton border-gray-300 rounded focus:ring-clerky-backendButton"
+                    />
+                    <div className="flex-1">
+                      <p className="text-sm font-medium text-clerky-backendText dark:text-gray-200">
+                        {group.name || group.id}
+                      </p>
+                      {group.description && (
+                        <p className="text-xs text-gray-500 dark:text-gray-400 line-clamp-1">
+                          {group.description}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Foto do Grupo */}
+            <div className="border border-gray-200 dark:border-gray-700 rounded-lg p-4">
+              <h3 className="text-sm font-semibold text-clerky-backendText dark:text-gray-200 mb-2">
+                {t('groupManager.bulkEdit.updatePicture')}
+              </h3>
+              {bulkImagePreview && (
+                <div className="mb-2 flex justify-center">
+                  <img
+                    src={bulkImagePreview}
+                    alt="Preview"
+                    className="w-32 h-32 object-cover rounded-lg border border-gray-300 dark:border-gray-600"
+                  />
+                </div>
+              )}
+              <input
+                type="file"
+                accept="image/*"
+                onChange={handleBulkImageChange}
+                className="block w-full text-sm text-gray-500 dark:text-gray-400 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-clerky-backendButton file:text-white hover:file:bg-clerky-backendButtonHover"
+              />
+              {showImageCropModal && imageToCrop && (
+                <Modal
+                  isOpen={showImageCropModal}
+                  onClose={handleCropCancel}
+                  title={t('groupManager.cropImage')}
+                  size="xl"
+                >
+                  <ImageCrop
+                    imageSrc={imageToCrop}
+                    onCrop={handleBulkCropComplete}
+                    onCancel={handleCropCancel}
+                    aspectRatio={1}
+                    circular={true}
+                  />
+                </Modal>
+              )}
+            </div>
+
+            {/* Descrição */}
+            <div className="border border-gray-200 dark:border-gray-700 rounded-lg p-4">
+              <h3 className="text-sm font-semibold text-clerky-backendText dark:text-gray-200 mb-2">
+                {t('groupManager.bulkEdit.updateDescription')}
+              </h3>
+              <textarea
+                value={bulkDescription}
+                onChange={(e) => setBulkDescription(e.target.value)}
+                placeholder={t('groupManager.descriptionPlaceholder')}
+                className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-clerky-backendButton focus:border-transparent bg-white dark:bg-gray-700 text-clerky-backendText dark:text-gray-200 min-h-[100px]"
+              />
+            </div>
+
+            {/* Mencionar Todos */}
+            <div className="border border-gray-200 dark:border-gray-700 rounded-lg p-4">
+              <h3 className="text-sm font-semibold text-clerky-backendText dark:text-gray-200 mb-2">
+                {t('groupManager.bulkEdit.mentionEveryone')}
+              </h3>
+              <textarea
+                value={bulkMentionText}
+                onChange={(e) => setBulkMentionText(e.target.value)}
+                placeholder={t('groupManager.mention.placeholder')}
+                className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-clerky-backendButton focus:border-transparent bg-white dark:bg-gray-700 text-clerky-backendText dark:text-gray-200 min-h-[100px]"
+              />
+            </div>
+
+            {/* Configurações */}
+            <div className="border border-gray-200 dark:border-gray-700 rounded-lg p-4">
+              <h3 className="text-sm font-semibold text-clerky-backendText dark:text-gray-200 mb-3">
+                {t('groupManager.bulkEdit.updateSettings')}
+              </h3>
+              <div className="space-y-3">
+                <div>
+                  <label className="block text-xs text-gray-600 dark:text-gray-400 mb-2">
+                    {t('groupManager.settings.announcement')}
+                  </label>
+                  <select
+                    value={bulkAnnouncement === undefined ? '' : bulkAnnouncement ? 'true' : 'false'}
+                    onChange={(e) => setBulkAnnouncement(e.target.value === '' ? undefined : e.target.value === 'true')}
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-clerky-backendButton focus:border-transparent bg-white dark:bg-gray-700 text-clerky-backendText dark:text-gray-200 text-sm"
+                  >
+                    <option value="">{t('groupManager.bulkEdit.noChange')}</option>
+                    <option value="true">{t('groupManager.bulkEdit.enable')}</option>
+                    <option value="false">{t('groupManager.bulkEdit.disable')}</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-xs text-gray-600 dark:text-gray-400 mb-2">
+                    {t('groupManager.settings.locked')}
+                  </label>
+                  <select
+                    value={bulkLocked === undefined ? '' : bulkLocked ? 'true' : 'false'}
+                    onChange={(e) => setBulkLocked(e.target.value === '' ? undefined : e.target.value === 'true')}
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-clerky-backendButton focus:border-transparent bg-white dark:bg-gray-700 text-clerky-backendText dark:text-gray-200 text-sm"
+                  >
+                    <option value="">{t('groupManager.bulkEdit.noChange')}</option>
+                    <option value="true">{t('groupManager.bulkEdit.enable')}</option>
+                    <option value="false">{t('groupManager.bulkEdit.disable')}</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+
+            {/* Botões */}
+            <div className="flex justify-end gap-2 pt-4 border-t border-gray-200 dark:border-gray-700">
+              <Button variant="outline" onClick={() => {
+                setShowBulkEditModal(false);
+                setSelectedGroups(new Set());
+                setBulkImage(null);
+                setBulkImagePreview(null);
+                setBulkDescription('');
+                setBulkMentionText('');
+                setBulkAnnouncement(undefined);
+                setBulkLocked(undefined);
+              }}>
+                {t('groupManager.cancel')}
+              </Button>
+              <Button onClick={handleBulkUpdate} disabled={isBulkUpdating || selectedGroups.size === 0}>
+                {isBulkUpdating ? t('groupManager.bulkEdit.applying') : t('groupManager.bulkEdit.apply')}
               </Button>
             </div>
           </div>
