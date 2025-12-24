@@ -859,7 +859,152 @@ export const aiAgentAPI = {
   },
 };
 
-const api = { authAPI, instanceAPI, crmAPI, dispatchAPI, workflowAPI, aiAgentAPI };
+// Group Interfaces
+export interface GroupParticipant {
+  id: string;
+  name?: string;
+  isAdmin?: boolean;
+}
+
+export interface Group {
+  id: string;
+  name?: string;
+  description?: string;
+  creation?: number;
+  participants?: GroupParticipant[];
+  pictureUrl?: string;
+  settings?: {
+    announcement?: boolean;
+    locked?: boolean;
+  };
+}
+
+// Group API
+export const groupAPI = {
+  getAll: async (instanceId: string): Promise<{ status: string; groups: Group[] }> => {
+    return request<{ status: string; groups: Group[] }>(`/groups?instanceId=${instanceId}`);
+  },
+
+  leave: async (instanceId: string, groupId: string): Promise<{ status: string; message: string }> => {
+    return request<{ status: string; message: string }>(`/groups/leave`, {
+      method: 'POST',
+      body: JSON.stringify({ instanceId, groupId }),
+    });
+  },
+
+  validateParticipants: async (
+    instanceId: string,
+    participants: string[]
+  ): Promise<{
+    status: string;
+    valid: Array<{ phone: string; name?: string }>;
+    invalid: Array<{ phone: string; reason: string }>;
+    validCount: number;
+    invalidCount: number;
+    totalCount: number;
+  }> => {
+    return request<{
+      status: string;
+      valid: Array<{ phone: string; name?: string }>;
+      invalid: Array<{ phone: string; reason: string }>;
+      validCount: number;
+      invalidCount: number;
+      totalCount: number;
+    }>(`/groups/validate-participants`, {
+      method: 'POST',
+      body: JSON.stringify({ instanceId, participants }),
+    });
+  },
+
+  create: async (
+    instanceId: string,
+    subject: string,
+    description: string,
+    participants: string[]
+  ): Promise<{ status: string; message: string; group: Group }> => {
+    return request<{ status: string; message: string; group: Group }>(`/groups/create`, {
+      method: 'POST',
+      body: JSON.stringify({ instanceId, subject, description, participants }),
+    });
+  },
+
+  updatePicture: async (
+    instanceId: string,
+    groupId: string,
+    file: File
+  ): Promise<{ status: string; message: string; imageUrl: string }> => {
+    const token = localStorage.getItem('token');
+    const formData = new FormData();
+    formData.append('image', file);
+    formData.append('instanceId', instanceId);
+    formData.append('groupId', groupId);
+
+    const response = await fetch(`${API_URL}/groups/update-picture`, {
+      method: 'POST',
+      headers: {
+        ...(token && { Authorization: `Bearer ${token}` }),
+      },
+      body: formData,
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      const error: ApiError = {
+        status: data.status || 'error',
+        message: data.message || 'Erro ao atualizar imagem do grupo',
+      };
+      throw error;
+    }
+
+    return data;
+  },
+
+  updateSubject: async (
+    instanceId: string,
+    groupId: string,
+    subject: string
+  ): Promise<{ status: string; message: string }> => {
+    return request<{ status: string; message: string }>(`/groups/update-subject`, {
+      method: 'POST',
+      body: JSON.stringify({ instanceId, groupId, subject }),
+    });
+  },
+
+  updateDescription: async (
+    instanceId: string,
+    groupId: string,
+    description: string
+  ): Promise<{ status: string; message: string }> => {
+    return request<{ status: string; message: string }>(`/groups/update-description`, {
+      method: 'POST',
+      body: JSON.stringify({ instanceId, groupId, description }),
+    });
+  },
+
+  getInviteCode: async (
+    instanceId: string,
+    groupId: string
+  ): Promise<{ status: string; code: string; url: string }> => {
+    return request<{ status: string; code: string; url: string }>(
+      `/groups/invite-code?instanceId=${instanceId}&groupId=${encodeURIComponent(groupId)}`
+    );
+  },
+
+  updateSettings: async (
+    instanceId: string,
+    groupId: string,
+    announcement?: boolean,
+    locked?: boolean
+  ): Promise<{ status: string; message: string }> => {
+    return request<{ status: string; message: string }>(`/groups/update-settings`, {
+      method: 'POST',
+      body: JSON.stringify({ instanceId, groupId, announcement, locked }),
+    });
+  },
+};
+
+const api = { authAPI, instanceAPI, crmAPI, dispatchAPI, workflowAPI, aiAgentAPI, groupAPI };
 
 export default api;
 

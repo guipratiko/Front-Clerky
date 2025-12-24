@@ -15,6 +15,7 @@ import Integration from './pages/Integration';
 import AIAgentPage from './pages/AIAgent';
 import Documentation from './pages/Documentation';
 import Settings from './pages/Settings';
+import GroupManager from './pages/GroupManager';
 import { usePageTitle } from './hooks/usePageTitle';
 
 function AppContent() {
@@ -93,6 +94,14 @@ function AppContent() {
         element={
           <ProtectedRoute>
             <Settings />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/gerenciador-grupos"
+        element={
+          <ProtectedRoute>
+            <GroupManager />
           </ProtectedRoute>
         }
       />

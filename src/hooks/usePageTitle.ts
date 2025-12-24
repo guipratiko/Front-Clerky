@@ -16,6 +16,7 @@ const routeTitleMap: Record<string, string> = {
   '/agente-ia': 'menu.aiAgent',
   '/documentacao': 'menu.documentation',
   '/configuracoes': 'menu.settings',
+  '/gerenciador-grupos': 'menu.groupManager',
 };
 
 export const usePageTitle = () => {
