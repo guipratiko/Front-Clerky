@@ -989,8 +989,7 @@ const GroupManager: React.FC = () => {
 
         {successMessage && (
           <div className="bg-green-100 dark:bg-green-900/20 border border-green-400 text-green-700 dark:text-green-400 px-4 py-3 rounded relative" role="alert">
-            <strong className="font-bold">{t('success.title')}</strong>
-            <span className="block sm:inline"> {successMessage}</span>
+            <span className="block sm:inline">{successMessage}</span>
           </div>
         )}
 

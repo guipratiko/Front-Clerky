@@ -877,6 +877,83 @@ export interface Group {
   locked?: boolean;
 }
 
+// Dashboard API
+export interface DashboardStats {
+  instances: {
+    total: number;
+    connected: number;
+    disconnected: number;
+    connecting: number;
+    error: number;
+  };
+  contacts: {
+    total: number;
+    byColumn: Array<{ columnId: string; count: number }>;
+  };
+  dispatches: {
+    total: number;
+    pending: number;
+    running: number;
+    completed: number;
+    failed: number;
+    paused: number;
+  };
+  workflows: {
+    total: number;
+  };
+  groups: {
+    total: number;
+  };
+  aiAgents: {
+    total: number;
+    active: number;
+  };
+}
+
+export interface RecentActivity {
+  messages: Array<{
+    id: string;
+    contactId: string;
+    contactName: string;
+    contactPhone: string;
+    content: string;
+    messageType: string;
+    timestamp: string;
+  }>;
+  contacts: Array<{
+    id: string;
+    name: string | null;
+    phone: string;
+    createdAt: string;
+  }>;
+  dispatches: Array<{
+    id: string;
+    name: string;
+    status: string;
+    stats: {
+      total: number;
+      sent: number;
+      failed: number;
+      invalid: number;
+    };
+    createdAt: string;
+  }>;
+}
+
+export const dashboardAPI = {
+  getStats: async (): Promise<{
+    status: string;
+    stats: DashboardStats;
+    recent: RecentActivity;
+  }> => {
+    return request<{
+      status: string;
+      stats: DashboardStats;
+      recent: RecentActivity;
+    }>('/dashboard/stats');
+  },
+};
+
 // Group API
 export const groupAPI = {
   getAll: async (instanceId: string): Promise<{ status: string; groups: Group[] }> => {
@@ -1012,7 +1089,7 @@ export const groupAPI = {
   },
 };
 
-const api = { authAPI, instanceAPI, crmAPI, dispatchAPI, workflowAPI, aiAgentAPI, groupAPI };
+const api = { authAPI, instanceAPI, crmAPI, dispatchAPI, workflowAPI, aiAgentAPI, groupAPI, dashboardAPI };
 
 export default api;
 
