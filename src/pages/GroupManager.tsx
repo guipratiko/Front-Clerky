@@ -525,13 +525,18 @@ const GroupManager: React.FC = () => {
       setTimeout(() => setSuccessMessage(null), 3000);
       // Recarregar grupos para atualizar as configurações
       await loadGroups();
+      // Aguardar um pouco para garantir que a API atualizou
+      await new Promise(resolve => setTimeout(resolve, 500));
       // Atualizar o grupo editado com as novas configurações
       const updatedGroups = await groupAPI.getAll(selectedInstance);
       const updatedGroup = updatedGroups.groups.find((g) => g.id === editingGroup.id);
       if (updatedGroup) {
         setEditingGroup(updatedGroup);
-        setAnnouncement(updatedGroup.settings?.announcement || false);
-        setLocked(updatedGroup.settings?.locked || false);
+        // Atualizar os estados com os valores reais do servidor
+        const newAnnouncement = updatedGroup.settings?.announcement === true;
+        const newLocked = updatedGroup.settings?.locked === true;
+        setAnnouncement(newAnnouncement);
+        setLocked(newLocked);
       }
     } catch (error: unknown) {
       logError('Erro ao atualizar configurações do grupo', error);
@@ -1587,7 +1592,7 @@ const GroupManager: React.FC = () => {
                       <input
                         type="checkbox"
                         id="editAnnouncement"
-                        checked={announcement}
+                        checked={announcement === true}
                         onChange={(e) => setAnnouncement(e.target.checked)}
                         className="w-4 h-4 text-clerky-backendButton border-gray-300 rounded focus:ring-clerky-backendButton"
                       />
@@ -1602,7 +1607,7 @@ const GroupManager: React.FC = () => {
                       <input
                         type="checkbox"
                         id="editLocked"
-                        checked={locked}
+                        checked={locked === true}
                         onChange={(e) => setLocked(e.target.checked)}
                         className="w-4 h-4 text-clerky-backendButton border-gray-300 rounded focus:ring-clerky-backendButton"
                       />
