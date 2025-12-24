@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { AppLayout } from '../components/Layout';
 import { Card, Button, Modal, Input } from '../components/UI';
 import ImageCrop from '../components/UI/ImageCrop';
@@ -889,13 +889,44 @@ const GroupManager: React.FC = () => {
     }
   };
 
-  // Callback para atualizar grupos via WebSocket
+  // Ref para debounce de atualizações via WebSocket
+  const groupsUpdateTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const isUpdatingGroupsRef = useRef(false);
+
+  // Callback para atualizar grupos via WebSocket com debounce
   const handleGroupsUpdate = useCallback((data: { instanceId: string }) => {
     // Recarregar grupos apenas se a instância atual for a que foi atualizada
-    if (selectedInstance === data.instanceId) {
-      loadGroups();
+    if (selectedInstance !== data.instanceId) {
+      return;
     }
+
+    // Se já está atualizando, ignorar
+    if (isUpdatingGroupsRef.current) {
+      return;
+    }
+
+    // Limpar timeout anterior se existir
+    if (groupsUpdateTimeoutRef.current) {
+      clearTimeout(groupsUpdateTimeoutRef.current);
+    }
+
+    // Aguardar 2 segundos antes de atualizar (debounce)
+    groupsUpdateTimeoutRef.current = setTimeout(() => {
+      isUpdatingGroupsRef.current = true;
+      loadGroups().finally(() => {
+        isUpdatingGroupsRef.current = false;
+      });
+    }, 2000);
   }, [selectedInstance, loadGroups]);
+
+  // Cleanup do timeout quando componente desmontar
+  useEffect(() => {
+    return () => {
+      if (groupsUpdateTimeoutRef.current) {
+        clearTimeout(groupsUpdateTimeoutRef.current);
+      }
+    };
+  }, []);
 
   // Conectar ao WebSocket
   useSocket(token, undefined, undefined, undefined, undefined, undefined, handleGroupsUpdate);
