@@ -873,10 +873,6 @@ export interface Group {
   creation?: number;
   participants?: GroupParticipant[];
   pictureUrl?: string;
-  settings?: {
-    announcement?: boolean;
-    locked?: boolean;
-  };
 }
 
 // Group API
@@ -989,47 +985,6 @@ export const groupAPI = {
     return request<{ status: string; code: string; url: string }>(
       `/groups/invite-code?instanceId=${instanceId}&groupId=${encodeURIComponent(groupId)}`
     );
-  },
-
-  updateSettings: async (
-    instanceId: string,
-    groupId: string,
-    announcement?: boolean,
-    locked?: boolean
-  ): Promise<{ status: string; message: string }> => {
-    const apiCallId = `api-call-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
-    console.log(`[${apiCallId}] [FRONTEND API] groupAPI.updateSettings chamado`, {
-      instanceId,
-      groupId,
-      announcement,
-      locked,
-      announcementType: typeof announcement,
-      lockedType: typeof locked,
-      timestamp: new Date().toISOString(),
-    });
-    
-    const startTime = Date.now();
-    try {
-      const result = await request<{ status: string; message: string }>(`/groups/update-settings`, {
-        method: 'POST',
-        body: JSON.stringify({ instanceId, groupId, announcement, locked }),
-      });
-      const endTime = Date.now();
-      console.log(`[${apiCallId}] [FRONTEND API] groupAPI.updateSettings sucesso`, {
-        result,
-        duration: `${endTime - startTime}ms`,
-        timestamp: new Date().toISOString(),
-      });
-      return result;
-    } catch (error) {
-      const endTime = Date.now();
-      console.error(`[${apiCallId}] [FRONTEND API] groupAPI.updateSettings erro`, {
-        error,
-        duration: `${endTime - startTime}ms`,
-        timestamp: new Date().toISOString(),
-      });
-      throw error;
-    }
   },
 
   mentionEveryone: async (
