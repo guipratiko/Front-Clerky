@@ -430,14 +430,33 @@ const GroupManager: React.FC = () => {
 
   // Abrir modal de edição
   const handleOpenEditModal = (group: Group) => {
+    console.log('[FRONTEND] Abrindo modal de edição:', {
+      groupId: group.id,
+      groupName: group.name,
+      currentSettings: group.settings,
+      announcement: group.settings?.announcement,
+      locked: group.settings?.locked,
+      timestamp: new Date().toISOString(),
+    });
+    
     setEditingGroup(group);
     setGroupName(group.name || '');
     setGroupDescription(group.description || '');
     setGroupImage(null);
     setGroupImagePreview(group.pictureUrl || null);
     // Usar valores explícitos do servidor, não defaults
-    setAnnouncement(group.settings?.announcement === true);
-    setLocked(group.settings?.locked === true);
+    const announcementValue = group.settings?.announcement === true;
+    const lockedValue = group.settings?.locked === true;
+    
+    console.log('[FRONTEND] Definindo valores iniciais:', {
+      announcementValue,
+      lockedValue,
+      announcementFromGroup: group.settings?.announcement,
+      lockedFromGroup: group.settings?.locked,
+    });
+    
+    setAnnouncement(announcementValue);
+    setLocked(lockedValue);
     setEditActiveTab('info');
     setEditParticipantsText('');
     setEditParticipantsCSV(null);
@@ -524,19 +543,63 @@ const GroupManager: React.FC = () => {
 
   // Atualizar configurações do grupo
   const handleUpdateSettings = async () => {
-    if (!editingGroup || !selectedInstance || isUpdatingSettings) return;
+    const callId = `update-settings-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+    console.log(`[${callId}] [FRONTEND] handleUpdateSettings chamado`, {
+      editingGroup: editingGroup?.id,
+      selectedInstance,
+      isUpdatingSettings,
+      announcement,
+      locked,
+      timestamp: new Date().toISOString(),
+      stackTrace: new Error().stack,
+    });
+
+    if (!editingGroup || !selectedInstance) {
+      console.log(`[${callId}] [FRONTEND] Retornando: editingGroup ou selectedInstance não definido`);
+      return;
+    }
+
+    if (isUpdatingSettings) {
+      console.log(`[${callId}] [FRONTEND] Retornando: isUpdatingSettings já é true (chamada duplicada bloqueada)`);
+      return;
+    }
 
     // Salvar os valores atuais antes de atualizar
     const savedAnnouncement = announcement;
     const savedLocked = locked;
 
+    console.log(`[${callId}] [FRONTEND] Valores salvos:`, {
+      savedAnnouncement,
+      savedLocked,
+      announcementType: typeof announcement,
+      lockedType: typeof locked,
+    });
+
     try {
+      console.log(`[${callId}] [FRONTEND] Definindo isUpdatingSettings = true`);
       setIsUpdatingSettings(true);
+      
+      console.log(`[${callId}] [FRONTEND] Chamando groupAPI.updateSettings`, {
+        instanceId: selectedInstance,
+        groupId: editingGroup.id,
+        announcement: savedAnnouncement,
+        locked: savedLocked,
+      });
+      
+      const startTime = Date.now();
       await groupAPI.updateSettings(selectedInstance, editingGroup.id, savedAnnouncement, savedLocked);
+      const endTime = Date.now();
+      
+      console.log(`[${callId}] [FRONTEND] groupAPI.updateSettings concluído`, {
+        duration: `${endTime - startTime}ms`,
+        timestamp: new Date().toISOString(),
+      });
+      
       setSuccessMessage(t('groupManager.success.updated'));
       setTimeout(() => setSuccessMessage(null), 3000);
       
       // Atualizar o grupo editado com as novas configurações imediatamente
+      console.log(`[${callId}] [FRONTEND] Atualizando editingGroup com novas configurações`);
       setEditingGroup({
         ...editingGroup,
         settings: {
@@ -546,11 +609,16 @@ const GroupManager: React.FC = () => {
       });
       
       // Recarregar grupos para atualizar a lista
+      console.log(`[${callId}] [FRONTEND] Recarregando grupos`);
       await loadGroups();
+      
+      console.log(`[${callId}] [FRONTEND] Processo completo finalizado com sucesso`);
     } catch (error: unknown) {
+      console.error(`[${callId}] [FRONTEND] Erro ao atualizar configurações:`, error);
       logError('Erro ao atualizar configurações do grupo', error);
       alert(getErrorMessage(error, t('groupManager.error.updateSettings')));
     } finally {
+      console.log(`[${callId}] [FRONTEND] Definindo isUpdatingSettings = false`);
       setIsUpdatingSettings(false);
     }
   };
@@ -895,12 +963,20 @@ const GroupManager: React.FC = () => {
   };
 
   useEffect(() => {
+    console.log('[FRONTEND] useEffect - token/loadInstances', {
+      hasToken: !!token,
+      timestamp: new Date().toISOString(),
+    });
     if (token) {
       loadInstances();
     }
   }, [token, loadInstances]);
 
   useEffect(() => {
+    console.log('[FRONTEND] useEffect - selectedInstance/loadGroups', {
+      selectedInstance,
+      timestamp: new Date().toISOString(),
+    });
     if (selectedInstance) {
       loadGroups();
     }
@@ -1602,7 +1678,15 @@ const GroupManager: React.FC = () => {
                         type="checkbox"
                         id="editAnnouncement"
                         checked={announcement === true}
-                        onChange={(e) => setAnnouncement(e.target.checked)}
+                        onChange={(e) => {
+                          const newValue = e.target.checked;
+                          console.log('[FRONTEND] Checkbox announcement alterado:', {
+                            oldValue: announcement,
+                            newValue,
+                            timestamp: new Date().toISOString(),
+                          });
+                          setAnnouncement(newValue);
+                        }}
                         className="w-4 h-4 text-clerky-backendButton border-gray-300 rounded focus:ring-clerky-backendButton"
                       />
                       <label htmlFor="editAnnouncement" className="text-sm text-gray-700 dark:text-gray-300">
@@ -1617,7 +1701,15 @@ const GroupManager: React.FC = () => {
                         type="checkbox"
                         id="editLocked"
                         checked={locked === true}
-                        onChange={(e) => setLocked(e.target.checked)}
+                        onChange={(e) => {
+                          const newValue = e.target.checked;
+                          console.log('[FRONTEND] Checkbox locked alterado:', {
+                            oldValue: locked,
+                            newValue,
+                            timestamp: new Date().toISOString(),
+                          });
+                          setLocked(newValue);
+                        }}
                         className="w-4 h-4 text-clerky-backendButton border-gray-300 rounded focus:ring-clerky-backendButton"
                       />
                       <label htmlFor="editLocked" className="text-sm text-gray-700 dark:text-gray-300">
@@ -1630,11 +1722,28 @@ const GroupManager: React.FC = () => {
                     <div className="pt-4 border-t border-gray-200 dark:border-gray-700">
                       <Button 
                         onClick={(e) => {
+                          const clickId = `button-click-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+                          console.log(`[${clickId}] [FRONTEND] Botão de atualizar configurações clicado`, {
+                            isUpdatingSettings,
+                            disabled: isUpdatingSettings,
+                            timestamp: new Date().toISOString(),
+                            event: {
+                              type: e.type,
+                              target: e.target,
+                              currentTarget: e.currentTarget,
+                            },
+                          });
+                          
                           e.preventDefault();
                           e.stopPropagation();
-                          if (!isUpdatingSettings) {
-                            handleUpdateSettings();
+                          
+                          if (isUpdatingSettings) {
+                            console.log(`[${clickId}] [FRONTEND] Clique ignorado: isUpdatingSettings é true`);
+                            return;
                           }
+                          
+                          console.log(`[${clickId}] [FRONTEND] Chamando handleUpdateSettings`);
+                          handleUpdateSettings();
                         }} 
                         disabled={isUpdatingSettings} 
                         className="w-full"

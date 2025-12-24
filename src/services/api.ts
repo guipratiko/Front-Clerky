@@ -997,10 +997,39 @@ export const groupAPI = {
     announcement?: boolean,
     locked?: boolean
   ): Promise<{ status: string; message: string }> => {
-    return request<{ status: string; message: string }>(`/groups/update-settings`, {
-      method: 'POST',
-      body: JSON.stringify({ instanceId, groupId, announcement, locked }),
+    const apiCallId = `api-call-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+    console.log(`[${apiCallId}] [FRONTEND API] groupAPI.updateSettings chamado`, {
+      instanceId,
+      groupId,
+      announcement,
+      locked,
+      announcementType: typeof announcement,
+      lockedType: typeof locked,
+      timestamp: new Date().toISOString(),
     });
+    
+    const startTime = Date.now();
+    try {
+      const result = await request<{ status: string; message: string }>(`/groups/update-settings`, {
+        method: 'POST',
+        body: JSON.stringify({ instanceId, groupId, announcement, locked }),
+      });
+      const endTime = Date.now();
+      console.log(`[${apiCallId}] [FRONTEND API] groupAPI.updateSettings sucesso`, {
+        result,
+        duration: `${endTime - startTime}ms`,
+        timestamp: new Date().toISOString(),
+      });
+      return result;
+    } catch (error) {
+      const endTime = Date.now();
+      console.error(`[${apiCallId}] [FRONTEND API] groupAPI.updateSettings erro`, {
+        error,
+        duration: `${endTime - startTime}ms`,
+        timestamp: new Date().toISOString(),
+      });
+      throw error;
+    }
   },
 
   mentionEveryone: async (
