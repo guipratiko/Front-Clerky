@@ -927,9 +927,9 @@ const GroupManager: React.FC = () => {
     const now = Date.now();
     const timeSinceLastUpdate = now - lastGroupsUpdateRef.current;
 
-    // Se passou menos de 5 segundos desde a última atualização, aguardar
-    // Aumentado para 5 segundos para evitar rate limiting
-    if (timeSinceLastUpdate < 5000) {
+    // Se passou menos de 10 segundos desde a última atualização, aguardar
+    // Aumentado para 10 segundos para evitar rate limiting da Evolution API
+    if (timeSinceLastUpdate < 10000) {
       // Limpar timeout anterior se existir
       if (groupsUpdateTimeoutRef.current) {
         clearTimeout(groupsUpdateTimeoutRef.current);
@@ -937,7 +937,7 @@ const GroupManager: React.FC = () => {
       groupsUpdateTimeoutRef.current = setTimeout(() => {
         lastGroupsUpdateRef.current = Date.now();
         loadGroups();
-      }, 5000 - timeSinceLastUpdate);
+      }, 10000 - timeSinceLastUpdate);
       return;
     }
 
