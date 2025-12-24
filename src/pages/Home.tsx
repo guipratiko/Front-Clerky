@@ -368,35 +368,68 @@ const ChartsSection: React.FC<ChartsSectionProps> = ({ stats }) => {
   );
 };
 
-interface NewsAndPromotionsProps {
-  newsUrl?: string;
-}
-
-const NewsAndPromotions: React.FC<NewsAndPromotionsProps> = ({ newsUrl = 'https://clerky.com.br/app/Newsletter' }) => {
+const NewsAndPromotions: React.FC = () => {
   const { t } = useLanguage();
 
+  // TODO: Carregar dados reais do Newsletter quando a API estiver disponível
+  // Por enquanto, exibir uma estrutura básica com conteúdo estático
+  const newsletterItems = [
+    {
+      id: 1,
+      type: 'news' as const,
+      title: t('dashboard.news.latestUpdate'),
+      description: t('dashboard.news.description'),
+      date: new Date().toLocaleDateString(),
+    },
+    {
+      id: 2,
+      type: 'promotion' as const,
+      title: t('dashboard.promotions.title'),
+      description: t('dashboard.promotions.description'),
+      date: new Date().toLocaleDateString(),
+    },
+  ];
+
   return (
-    <Card padding="lg" shadow="md" hover className="transition-all duration-200 hover:shadow-lg">
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-        <div className="flex-1">
-          <h2 className="text-xl font-semibold text-clerky-backendText dark:text-gray-200 mb-2">
-            {t('dashboard.news.title')}
-          </h2>
-          <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">
-            {t('dashboard.news.description')}
-          </p>
-          <p className="text-sm text-gray-500 dark:text-gray-500">
-            {t('dashboard.promotions.description')}
+    <Card padding="lg" shadow="md" className="transition-all duration-200">
+      <div className="flex flex-col h-full">
+        <h2 className="text-xl font-semibold text-clerky-backendText dark:text-gray-200 mb-4">
+          {t('dashboard.news.title')}
+        </h2>
+        
+        <div className="flex-1 space-y-4 max-h-[400px] overflow-y-auto">
+          {newsletterItems.map((item) => (
+            <div
+              key={item.id}
+              className="p-4 bg-gray-50 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+            >
+              <div className="flex items-start justify-between mb-2">
+                <span
+                  className={`px-2 py-1 text-xs font-medium rounded ${
+                    item.type === 'news'
+                      ? 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200'
+                      : 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'
+                  }`}
+                >
+                  {item.type === 'news' ? t('dashboard.news.type.news') : t('dashboard.news.type.promotion')}
+                </span>
+                <span className="text-xs text-gray-500 dark:text-gray-400">{item.date}</span>
+              </div>
+              <h3 className="font-semibold text-clerky-backendText dark:text-gray-200 mb-2">
+                {item.title}
+              </h3>
+              <p className="text-sm text-gray-600 dark:text-gray-400 line-clamp-3">
+                {item.description}
+              </p>
+            </div>
+          ))}
+        </div>
+
+        <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
+          <p className="text-xs text-gray-500 dark:text-gray-400 text-center">
+            {t('dashboard.news.moreInfo')}
           </p>
         </div>
-        <a
-          href={newsUrl}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="inline-flex items-center justify-center px-6 py-3 bg-clerky-backendButton text-white rounded-lg hover:bg-clerky-backendButtonHover transition-colors text-sm font-medium whitespace-nowrap"
-        >
-          {t('dashboard.news.viewAll')}
-        </a>
       </div>
     </Card>
   );
