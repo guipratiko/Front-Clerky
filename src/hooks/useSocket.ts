@@ -83,6 +83,7 @@ const callbacks = new Set<{
   onContactUpdate?: () => void;
   onDispatchUpdate?: (data: DispatchUpdateData) => void;
   onWorkflowContactUpdate?: (data: { workflowId: string; contactPhone: string; instanceId: string }) => void;
+  onGroupsUpdate?: (data: { instanceId: string }) => void;
 }>();
 
 /**
@@ -95,12 +96,14 @@ const createCallbackObj = (callbackRef: React.MutableRefObject<{
   onContactUpdate?: () => void;
   onDispatchUpdate?: (data: DispatchUpdateData) => void;
   onWorkflowContactUpdate?: (data: { workflowId: string; contactPhone: string; instanceId: string }) => void;
+  onGroupsUpdate?: (data: { instanceId: string }) => void;
 }>) => ({
   get onStatusUpdate() { return callbackRef.current.onStatusUpdate; },
   get onNewMessage() { return callbackRef.current.onNewMessage; },
   get onContactUpdate() { return callbackRef.current.onContactUpdate; },
   get onDispatchUpdate() { return callbackRef.current.onDispatchUpdate; },
   get onWorkflowContactUpdate() { return callbackRef.current.onWorkflowContactUpdate; },
+  get onGroupsUpdate() { return callbackRef.current.onGroupsUpdate; },
 });
 
 /**
@@ -123,14 +126,15 @@ export const useSocket = (
   onNewMessage?: (data: NewMessageData) => void,
   onContactUpdate?: () => void,
   onDispatchUpdate?: (data: DispatchUpdateData) => void,
-  onWorkflowContactUpdate?: (data: { workflowId: string; contactPhone: string; instanceId: string }) => void
+  onWorkflowContactUpdate?: (data: { workflowId: string; contactPhone: string; instanceId: string }) => void,
+  onGroupsUpdate?: (data: { instanceId: string }) => void
 ) => {
-  const callbackRef = useRef({ onStatusUpdate, onNewMessage, onContactUpdate, onDispatchUpdate, onWorkflowContactUpdate });
+  const callbackRef = useRef({ onStatusUpdate, onNewMessage, onContactUpdate, onDispatchUpdate, onWorkflowContactUpdate, onGroupsUpdate });
 
   // Atualizar referências dos callbacks
   useEffect(() => {
-    callbackRef.current = { onStatusUpdate, onNewMessage, onContactUpdate, onDispatchUpdate, onWorkflowContactUpdate };
-  }, [onStatusUpdate, onNewMessage, onContactUpdate, onDispatchUpdate, onWorkflowContactUpdate]);
+    callbackRef.current = { onStatusUpdate, onNewMessage, onContactUpdate, onDispatchUpdate, onWorkflowContactUpdate, onGroupsUpdate };
+  }, [onStatusUpdate, onNewMessage, onContactUpdate, onDispatchUpdate, onWorkflowContactUpdate, onGroupsUpdate]);
 
   useEffect(() => {
     if (!token) {
@@ -203,6 +207,7 @@ export const useSocket = (
         socket.off('new-message');
         socket.off('dispatch-updated');
         socket.off('workflow-contact-updated');
+        socket.off('groups-updated');
         socket.off('error');
 
       socket.on('instance-status-updated', (data: { instanceId: string; status: string }) => {
@@ -243,6 +248,14 @@ export const useSocket = (
           callbacks.forEach((cb) => {
             if (cb.onWorkflowContactUpdate) {
               cb.onWorkflowContactUpdate(data);
+            }
+          });
+        });
+
+        socket.on('groups-updated', (data: { instanceId: string }) => {
+          callbacks.forEach((cb) => {
+            if (cb.onGroupsUpdate) {
+              cb.onGroupsUpdate(data);
             }
           });
         });

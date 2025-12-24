@@ -8,6 +8,7 @@ import { instanceAPI, Instance, Contact, crmAPI } from '../services/api';
 import { groupAPI, Group } from '../services/api';
 import { getErrorMessage, logError } from '../utils/errorHandler';
 import { parseCSVText, parseInputText } from '../utils/csvParser';
+import { useSocket } from '../hooks/useSocket';
 
 const GroupManager: React.FC = () => {
   const { t } = useLanguage();
@@ -75,8 +76,12 @@ const GroupManager: React.FC = () => {
   const [bulkImage, setBulkImage] = useState<File | null>(null);
   const [bulkImagePreview, setBulkImagePreview] = useState<string | null>(null);
   const [bulkDescription, setBulkDescription] = useState('');
-  const [bulkMentionText, setBulkMentionText] = useState('');
   const [isBulkUpdating, setIsBulkUpdating] = useState(false);
+  
+  // Estados para mencionar em todos os grupos
+  const [showMentionAllGroupsModal, setShowMentionAllGroupsModal] = useState(false);
+  const [mentionAllGroupsText, setMentionAllGroupsText] = useState('');
+  const [isMentioningAllGroups, setIsMentioningAllGroups] = useState(false);
 
   // Carregar instâncias
   const loadInstances = useCallback(async () => {
@@ -517,6 +522,49 @@ const GroupManager: React.FC = () => {
     }
   };
 
+  // Mencionar em todos os grupos
+  const handleMentionAllGroups = async () => {
+    if (!selectedInstance || groups.length === 0 || isMentioningAllGroups) return;
+    
+    if (!mentionAllGroupsText.trim()) {
+      alert(t('groupManager.mention.textRequired'));
+      return;
+    }
+
+    try {
+      setIsMentioningAllGroups(true);
+      let successCount = 0;
+      let errorCount = 0;
+
+      for (const group of groups) {
+        try {
+          await groupAPI.mentionEveryone(selectedInstance, group.id, mentionAllGroupsText.trim());
+          successCount++;
+        } catch (error) {
+          errorCount++;
+          logError(`Erro ao mencionar todos no grupo ${group.id}`, error);
+        }
+      }
+
+      if (successCount > 0) {
+        setSuccessMessage(t('groupManager.mentionAllGroups.success', { count: successCount.toString() }));
+        setTimeout(() => setSuccessMessage(null), 5000);
+      }
+      if (errorCount > 0) {
+        alert(t('groupManager.mentionAllGroups.errors', { count: errorCount.toString() }));
+      }
+
+      setShowMentionAllGroupsModal(false);
+      setMentionAllGroupsText('');
+      await loadGroups();
+    } catch (error: unknown) {
+      logError('Erro ao mencionar em todos os grupos', error);
+      alert(getErrorMessage(error, t('groupManager.error.mentionAllGroups')));
+    } finally {
+      setIsMentioningAllGroups(false);
+    }
+  };
+
   // Atualizar imagem do grupo
   const handleUpdatePicture = async () => {
     if (!editingGroup || !selectedInstance || !groupImage) return;
@@ -819,19 +867,6 @@ const GroupManager: React.FC = () => {
         }
       }
 
-      // Mencionar todos
-      if (bulkMentionText.trim()) {
-        for (const groupId of groupIds) {
-          try {
-            await groupAPI.mentionEveryone(selectedInstance, groupId, bulkMentionText.trim());
-            successCount++;
-          } catch (error) {
-            errorCount++;
-            logError(`Erro ao mencionar todos no grupo ${groupId}`, error);
-          }
-        }
-      }
-
       if (successCount > 0) {
         setSuccessMessage(t('groupManager.bulkEdit.success', { count: successCount.toString() }));
         setTimeout(() => setSuccessMessage(null), 5000);
@@ -845,7 +880,6 @@ const GroupManager: React.FC = () => {
       setBulkImage(null);
       setBulkImagePreview(null);
       setBulkDescription('');
-      setBulkMentionText('');
       await loadGroups();
     } catch (error: unknown) {
       logError('Erro ao aplicar edições em massa', error);
@@ -854,6 +888,17 @@ const GroupManager: React.FC = () => {
       setIsBulkUpdating(false);
     }
   };
+
+  // Callback para atualizar grupos via WebSocket
+  const handleGroupsUpdate = useCallback((data: { instanceId: string }) => {
+    // Recarregar grupos apenas se a instância atual for a que foi atualizada
+    if (selectedInstance === data.instanceId) {
+      loadGroups();
+    }
+  }, [selectedInstance, loadGroups]);
+
+  // Conectar ao WebSocket
+  useSocket(token, undefined, undefined, undefined, undefined, undefined, handleGroupsUpdate);
 
   useEffect(() => {
     if (token) {
@@ -889,9 +934,14 @@ const GroupManager: React.FC = () => {
               {t('groupManager.createGroup')}
             </Button>
             {groups.length > 0 && (
-              <Button variant="outline" onClick={() => setShowBulkEditModal(true)} disabled={!selectedInstance}>
-                {t('groupManager.bulkEdit')}
-              </Button>
+              <>
+                <Button variant="outline" onClick={() => setShowMentionAllGroupsModal(true)} disabled={!selectedInstance}>
+                  {t('groupManager.mentionAllGroups')}
+                </Button>
+                <Button variant="outline" onClick={() => setShowBulkEditModal(true)} disabled={!selectedInstance}>
+                  {t('groupManager.bulkEdit')}
+                </Button>
+              </>
             )}
             <Button variant="outline" onClick={refreshGroups} disabled={isRefreshing || !selectedInstance}>
               {isRefreshing ? t('groupManager.refreshing') : t('groupManager.refresh')}
@@ -1766,7 +1816,6 @@ const GroupManager: React.FC = () => {
             setBulkImage(null);
             setBulkImagePreview(null);
             setBulkDescription('');
-            setBulkMentionText('');
           }}
           title={t('groupManager.bulkEdit.title')}
           size="xl"
@@ -1865,20 +1914,6 @@ const GroupManager: React.FC = () => {
               />
             </div>
 
-            {/* Mencionar Todos */}
-            <div className="border border-gray-200 dark:border-gray-700 rounded-lg p-4">
-              <h3 className="text-sm font-semibold text-clerky-backendText dark:text-gray-200 mb-2">
-                {t('groupManager.bulkEdit.mentionEveryone')}
-              </h3>
-              <textarea
-                value={bulkMentionText}
-                onChange={(e) => setBulkMentionText(e.target.value)}
-                placeholder={t('groupManager.mention.placeholder')}
-                className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-clerky-backendButton focus:border-transparent bg-white dark:bg-gray-700 text-clerky-backendText dark:text-gray-200 min-h-[100px]"
-              />
-            </div>
-
-
             {/* Botões */}
             <div className="flex justify-end gap-2 pt-4 border-t border-gray-200 dark:border-gray-700">
               <Button variant="outline" onClick={() => {
@@ -1887,12 +1922,49 @@ const GroupManager: React.FC = () => {
                 setBulkImage(null);
                 setBulkImagePreview(null);
                 setBulkDescription('');
-                setBulkMentionText('');
               }}>
                 {t('groupManager.cancel')}
               </Button>
               <Button onClick={handleBulkUpdate} disabled={isBulkUpdating || selectedGroups.size === 0}>
                 {isBulkUpdating ? t('groupManager.bulkEdit.applying') : t('groupManager.bulkEdit.apply')}
+              </Button>
+            </div>
+          </div>
+        </Modal>
+
+        {/* Modal de Mencionar em Todos os Grupos */}
+        <Modal
+          isOpen={showMentionAllGroupsModal}
+          onClose={() => {
+            setShowMentionAllGroupsModal(false);
+            setMentionAllGroupsText('');
+          }}
+          title={t('groupManager.mentionAllGroups.title')}
+        >
+          <div className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                {t('groupManager.mentionAllGroups.message')}
+              </label>
+              <textarea
+                value={mentionAllGroupsText}
+                onChange={(e) => setMentionAllGroupsText(e.target.value)}
+                placeholder={t('groupManager.mentionAllGroups.placeholder')}
+                className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-clerky-backendButton focus:border-transparent bg-white dark:bg-gray-700 text-clerky-backendText dark:text-gray-200 min-h-[150px]"
+              />
+              <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                {t('groupManager.mentionAllGroups.helper', { count: groups.length.toString() })}
+              </p>
+            </div>
+            <div className="flex justify-end gap-2">
+              <Button variant="outline" onClick={() => {
+                setShowMentionAllGroupsModal(false);
+                setMentionAllGroupsText('');
+              }}>
+                {t('groupManager.cancel')}
+              </Button>
+              <Button onClick={handleMentionAllGroups} disabled={isMentioningAllGroups || !mentionAllGroupsText.trim()}>
+                {isMentioningAllGroups ? t('groupManager.mentionAllGroups.sending') : t('groupManager.mentionAllGroups.send')}
               </Button>
             </div>
           </div>
