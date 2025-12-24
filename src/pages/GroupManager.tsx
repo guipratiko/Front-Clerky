@@ -49,6 +49,7 @@ const GroupManager: React.FC = () => {
   const [showEditModal, setShowEditModal] = useState(false);
   const [editingGroup, setEditingGroup] = useState<Group | null>(null);
   const [isUpdating, setIsUpdating] = useState(false);
+  const [isUpdatingSettings, setIsUpdatingSettings] = useState(false);
   const [editActiveTab, setEditActiveTab] = useState<'info' | 'participants' | 'settings'>('info');
   const [editParticipantsText, setEditParticipantsText] = useState('');
   const [editParticipantsCSV, setEditParticipantsCSV] = useState<File | null>(null);
@@ -401,9 +402,14 @@ const GroupManager: React.FC = () => {
       }
 
       // Se tiver configurações, atualizar
-      if (response.group.id && (announcement !== undefined || locked !== undefined)) {
+      if (response.group.id && (announcement === true || locked === true)) {
         try {
-          await groupAPI.updateSettings(selectedInstance, response.group.id, announcement, locked);
+          await groupAPI.updateSettings(
+            selectedInstance, 
+            response.group.id, 
+            announcement === true ? true : undefined, 
+            locked === true ? true : undefined
+          );
         } catch (error: unknown) {
           logError('Erro ao atualizar configurações do grupo', error);
           // Não bloquear criação se falhar as configurações
@@ -452,6 +458,7 @@ const GroupManager: React.FC = () => {
     setAnnouncement(false);
     setLocked(false);
     setEditActiveTab('info');
+    setIsUpdatingSettings(false);
   };
 
   // Atualizar nome do grupo
@@ -517,20 +524,19 @@ const GroupManager: React.FC = () => {
 
   // Atualizar configurações do grupo
   const handleUpdateSettings = async () => {
-    if (!editingGroup || !selectedInstance) return;
+    if (!editingGroup || !selectedInstance || isUpdatingSettings) return;
 
     // Salvar os valores atuais antes de atualizar
     const savedAnnouncement = announcement;
     const savedLocked = locked;
 
     try {
-      setIsUpdating(true);
-      await groupAPI.updateSettings(selectedInstance, editingGroup.id, announcement, locked);
+      setIsUpdatingSettings(true);
+      await groupAPI.updateSettings(selectedInstance, editingGroup.id, savedAnnouncement, savedLocked);
       setSuccessMessage(t('groupManager.success.updated'));
       setTimeout(() => setSuccessMessage(null), 3000);
       
       // Atualizar o grupo editado com as novas configurações imediatamente
-      // Isso garante que o estado local reflete o que foi salvo
       setEditingGroup({
         ...editingGroup,
         settings: {
@@ -539,16 +545,13 @@ const GroupManager: React.FC = () => {
         },
       });
       
-      // Manter os estados locais com os valores que foram salvos
-      // Não alterar aqui, pois os valores já estão corretos
-      
-      // Recarregar grupos para atualizar a lista (mas não alterar o estado do modal)
+      // Recarregar grupos para atualizar a lista
       await loadGroups();
     } catch (error: unknown) {
       logError('Erro ao atualizar configurações do grupo', error);
       alert(getErrorMessage(error, t('groupManager.error.updateSettings')));
     } finally {
-      setIsUpdating(false);
+      setIsUpdatingSettings(false);
     }
   };
 
@@ -1625,8 +1628,19 @@ const GroupManager: React.FC = () => {
                       {t('groupManager.settings.lockedDescription')}
                     </p>
                     <div className="pt-4 border-t border-gray-200 dark:border-gray-700">
-                      <Button onClick={handleUpdateSettings} disabled={isUpdating} className="w-full">
-                        {isUpdating ? t('groupManager.updating') : t('groupManager.updateSettings')}
+                      <Button 
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          if (!isUpdatingSettings) {
+                            handleUpdateSettings();
+                          }
+                        }} 
+                        disabled={isUpdatingSettings} 
+                        className="w-full"
+                        type="button"
+                      >
+                        {isUpdatingSettings ? t('groupManager.updating') : t('groupManager.updateSettings')}
                       </Button>
                     </div>
                   </div>
