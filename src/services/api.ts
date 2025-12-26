@@ -1098,6 +1098,15 @@ export const groupAPI = {
       body: JSON.stringify({ instanceId, groupId, text }),
     });
   },
+
+  getParticipants: async (
+    instanceId: string,
+    groupId: string
+  ): Promise<{ status: string; participants: Array<{ id: string; name: string; phone: string; isAdmin: boolean }> }> => {
+    return request<{ status: string; participants: Array<{ id: string; name: string; phone: string; isAdmin: boolean }> }>(
+      `/groups/participants?instanceId=${instanceId}&groupId=${encodeURIComponent(groupId)}`
+    );
+  },
 };
 
 const api = { authAPI, instanceAPI, crmAPI, dispatchAPI, workflowAPI, aiAgentAPI, groupAPI, dashboardAPI };

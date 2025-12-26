@@ -22,6 +22,8 @@ const GroupManager: React.FC = () => {
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [showGroupDetailsModal, setShowGroupDetailsModal] = useState(false);
   const [selectedGroup, setSelectedGroup] = useState<Group | null>(null);
+  const [groupParticipants, setGroupParticipants] = useState<Array<{ id: string; name: string; phone: string; isAdmin: boolean }>>([]);
+  const [isLoadingParticipants, setIsLoadingParticipants] = useState(false);
   
   // Estados para criar/editar grupo
   const [showCreateModal, setShowCreateModal] = useState(false);
@@ -159,9 +161,24 @@ const GroupManager: React.FC = () => {
   };
 
   // Visualizar detalhes do grupo
-  const handleViewGroupDetails = (group: Group) => {
+  const handleViewGroupDetails = async (group: Group) => {
     setSelectedGroup(group);
     setShowGroupDetailsModal(true);
+    setGroupParticipants([]);
+    
+    // Buscar participantes do grupo
+    if (selectedInstance && group.id) {
+      try {
+        setIsLoadingParticipants(true);
+        const response = await groupAPI.getParticipants(selectedInstance, group.id);
+        setGroupParticipants(response.participants || []);
+      } catch (error: unknown) {
+        logError('Erro ao buscar participantes do grupo', error);
+        // Não mostrar erro, apenas deixar vazio
+      } finally {
+        setIsLoadingParticipants(false);
+      }
+    }
   };
 
   // Abrir modal de criação
@@ -824,6 +841,37 @@ const GroupManager: React.FC = () => {
         logError('Erro ao processar imagem', error);
         alert(getErrorMessage(error, t('groupManager.error.processImage')));
       });
+  };
+
+  // Download de participantes em CSV/Excel
+  const handleDownloadParticipants = () => {
+    if (groupParticipants.length === 0) {
+      alert(t('groupManager.noParticipantsToDownload'));
+      return;
+    }
+
+    // Preparar dados para CSV
+    const csvRows = [
+      ['Nome', 'Número'], // Cabeçalho
+      ...groupParticipants.map((p) => [
+        p.name || t('groupManager.unknown'),
+        p.phone || p.id || '',
+      ]),
+    ];
+
+    // Converter para CSV
+    const csvContent = csvRows.map((row) => row.map((cell) => `"${cell}"`).join(',')).join('\n');
+
+    // Criar blob e fazer download
+    const blob = new Blob(['\ufeff' + csvContent], { type: 'text/csv;charset=utf-8;' }); // BOM para Excel
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `${selectedGroup?.name || 'grupo'}_participantes.csv`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
   };
 
   // Aplicar edições em massa
@@ -1765,37 +1813,78 @@ const GroupManager: React.FC = () => {
                   </p>
                 </div>
               )}
-              {selectedGroup.participants && selectedGroup.participants.length > 0 && (
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    {t('groupManager.participants')} ({selectedGroup.participants.length})
+              <div>
+                <div className="flex items-center justify-between mb-2">
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                    {t('groupManager.participants')} ({groupParticipants.length || selectedGroup.participants?.length || 0})
                   </label>
+                  {groupParticipants.length > 0 && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleDownloadParticipants()}
+                      className="text-xs"
+                    >
+                      {t('groupManager.downloadParticipants')}
+                    </Button>
+                  )}
+                </div>
+                {isLoadingParticipants ? (
+                  <div className="text-center py-4 text-gray-500 dark:text-gray-400">
+                    {t('groupManager.loadingParticipants')}
+                  </div>
+                ) : groupParticipants.length > 0 ? (
                   <div className="max-h-64 overflow-y-auto space-y-2">
-                    {selectedGroup.participants.map((participant, index) => (
+                    {groupParticipants.map((participant, index) => (
                       <div
                         key={index}
                         className="flex items-center justify-between p-2 bg-gray-50 dark:bg-gray-800 rounded"
                       >
-                        <div>
+                        <div className="flex-1">
                           <p className="text-sm font-medium text-clerky-backendText dark:text-gray-200">
-                            {participant.name || participant.id}
+                            {participant.name || t('groupManager.unknown')}
                           </p>
-                          {participant.id && (
-                            <p className="text-xs text-gray-500 dark:text-gray-400 font-mono">
-                              {participant.id}
-                            </p>
-                          )}
+                          <p className="text-xs text-gray-500 dark:text-gray-400 font-mono">
+                            {participant.phone || participant.id}
+                          </p>
                         </div>
                         {participant.isAdmin && (
-                          <span className="px-2 py-1 text-xs bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400 rounded">
+                          <span className="px-2 py-1 text-xs bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400 rounded ml-2">
                             {t('groupManager.admin')}
                           </span>
                         )}
                       </div>
                     ))}
                   </div>
-                </div>
-              )}
+                ) : selectedGroup.participants && selectedGroup.participants.length > 0 ? (
+                  <div className="max-h-64 overflow-y-auto space-y-2">
+                    {selectedGroup.participants.map((participant, index) => (
+                      <div
+                        key={index}
+                        className="flex items-center justify-between p-2 bg-gray-50 dark:bg-gray-800 rounded"
+                      >
+                        <div className="flex-1">
+                          <p className="text-sm font-medium text-clerky-backendText dark:text-gray-200">
+                            {participant.name || t('groupManager.unknown')}
+                          </p>
+                          <p className="text-xs text-gray-500 dark:text-gray-400 font-mono">
+                            {participant.id}
+                          </p>
+                        </div>
+                        {participant.isAdmin && (
+                          <span className="px-2 py-1 text-xs bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400 rounded ml-2">
+                            {t('groupManager.admin')}
+                          </span>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-4 text-gray-500 dark:text-gray-400">
+                    {t('groupManager.noParticipants')}
+                  </div>
+                )}
+              </div>
             </div>
           )}
         </Modal>
