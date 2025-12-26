@@ -4,7 +4,7 @@ import { Card, Button } from '../components/UI';
 import { useLanguage } from '../contexts/LanguageContext';
 import { useAuth } from '../contexts/AuthContext';
 import { useSocket, DispatchUpdateData } from '../hooks/useSocket';
-import { dispatchAPI, Template, Dispatch, CreateTemplateData, CreateDispatchData } from '../services/api';
+import { dispatchAPI, instanceAPI, Template, Dispatch, CreateTemplateData, CreateDispatchData, Instance } from '../services/api';
 import TemplateBuilder from '../components/Dispatches/TemplateBuilder';
 import DispatchCreator from '../components/Dispatches/DispatchCreator';
 
@@ -20,6 +20,8 @@ const Dispatches: React.FC = () => {
   const [showTemplateModal, setShowTemplateModal] = useState(false);
   const [showDispatchModal, setShowDispatchModal] = useState(false);
   const [editingTemplate, setEditingTemplate] = useState<Template | null>(null);
+  const [editingDispatch, setEditingDispatch] = useState<Dispatch | null>(null);
+  const [instances, setInstances] = useState<Instance[]>([]);
 
   // Carregar templates
   const loadTemplates = async () => {
@@ -49,11 +51,22 @@ const Dispatches: React.FC = () => {
     }
   };
 
+  // Carregar instâncias
+  const loadInstances = async () => {
+    try {
+      const response = await instanceAPI.getAll();
+      setInstances(response.instances);
+    } catch (error) {
+      console.error('Erro ao carregar instâncias:', error);
+    }
+  };
+
   useEffect(() => {
     if (activeTab === 'templates') {
       loadTemplates();
     } else {
       loadDispatches();
+      loadInstances();
     }
   }, [activeTab]);
 
@@ -121,11 +134,27 @@ const Dispatches: React.FC = () => {
 
   const handleCreateDispatch = async (data: CreateDispatchData) => {
     try {
-      await dispatchAPI.createDispatch(data);
+      if (editingDispatch) {
+        await dispatchAPI.updateDispatch(editingDispatch.id, data);
+      } else {
+        await dispatchAPI.createDispatch(data);
+      }
       await loadDispatches();
       setShowDispatchModal(false);
+      setEditingDispatch(null);
     } catch (err: any) {
-      setError(err.message || 'Erro ao criar disparo');
+      setError(err.message || 'Erro ao salvar disparo');
+    }
+  };
+
+  const handleEditDispatch = async (dispatch: Dispatch) => {
+    // Buscar dados completos do disparo
+    try {
+      const response = await dispatchAPI.getDispatch(dispatch.id);
+      setEditingDispatch(response.dispatch);
+      setShowDispatchModal(true);
+    } catch (err: any) {
+      setError(err.message || 'Erro ao carregar disparo');
     }
   };
 
@@ -287,59 +316,105 @@ const Dispatches: React.FC = () => {
               </Card>
             ) : (
               <div className="space-y-4">
-                {dispatches.map((dispatch) => (
-                  <Card key={dispatch.id} className="p-4">
-                    <div className="flex justify-between items-start">
-                      <div>
-                        <h3 className="font-semibold text-clerky-backendText dark:text-gray-200 mb-2">
-                          {dispatch.name}
-                        </h3>
-                        <div className="flex gap-4 text-sm text-gray-500 dark:text-gray-400">
-                          <span>{t('dispatches.status')}: {dispatch.status}</span>
-                          <span>
-                            {t('dispatches.sent')}: {dispatch.stats.sent}/{dispatch.stats.total}
-                          </span>
+                {dispatches.map((dispatch) => {
+                  const instance = instances.find((i) => i.id === dispatch.instanceId);
+                  const template = templates.find((t) => t.id === dispatch.templateId);
+                  
+                  // Formatar data e hora do agendamento
+                  const formatSchedule = () => {
+                    if (!dispatch.schedule) return null;
+                    const date = dispatch.schedule.startDate 
+                      ? new Date(dispatch.schedule.startDate).toLocaleDateString('pt-BR')
+                      : null;
+                    const time = dispatch.schedule.startTime;
+                    return date ? `${date} às ${time}` : time;
+                  };
+
+                  return (
+                    <Card key={dispatch.id} className="p-4">
+                      <div className="flex justify-between items-start">
+                        <div className="flex-1">
+                          <h3 className="font-semibold text-clerky-backendText dark:text-gray-200 mb-2">
+                            {dispatch.name}
+                          </h3>
+                          <div className="space-y-1 text-sm text-gray-600 dark:text-gray-400">
+                            <div className="flex gap-4 flex-wrap">
+                              <span className="font-medium">{t('dispatches.status')}:</span>
+                              <span className="capitalize">{dispatch.status}</span>
+                            </div>
+                            <div className="flex gap-4 flex-wrap">
+                              <span className="font-medium">{t('dispatches.sent')}:</span>
+                              <span>{dispatch.stats.sent}/{dispatch.stats.total}</span>
+                            </div>
+                            {instance && (
+                              <div className="flex gap-4 flex-wrap">
+                                <span className="font-medium">{t('dispatches.instance')}:</span>
+                                <span>{instance.name}</span>
+                              </div>
+                            )}
+                            {template && (
+                              <div className="flex gap-4 flex-wrap">
+                                <span className="font-medium">{t('dispatches.template')}:</span>
+                                <span>{template.name}</span>
+                              </div>
+                            )}
+                            {dispatch.schedule && (
+                              <div className="flex gap-4 flex-wrap">
+                                <span className="font-medium">{t('dispatches.scheduledFor')}:</span>
+                                <span>{formatSchedule()}</span>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                        <div className="flex gap-2 ml-4">
+                          {dispatch.status === 'pending' && (
+                            <Button
+                              variant="primary"
+                              size="sm"
+                              onClick={() => handleStartDispatch(dispatch.id)}
+                            >
+                              {t('dispatches.start')}
+                            </Button>
+                          )}
+                          {dispatch.status === 'running' && (
+                            <Button
+                              variant="secondary"
+                              size="sm"
+                              onClick={() => handlePauseDispatch(dispatch.id)}
+                            >
+                              {t('dispatches.pause')}
+                            </Button>
+                          )}
+                          {dispatch.status === 'paused' && (
+                            <Button
+                              variant="primary"
+                              size="sm"
+                              onClick={() => handleResumeDispatch(dispatch.id)}
+                            >
+                              {t('dispatches.resume')}
+                            </Button>
+                          )}
+                          {(dispatch.status === 'pending' || dispatch.status === 'paused') && (
+                            <Button
+                              variant="secondary"
+                              size="sm"
+                              onClick={() => handleEditDispatch(dispatch)}
+                            >
+                              {t('dispatches.edit')}
+                            </Button>
+                          )}
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleDeleteDispatch(dispatch.id)}
+                          >
+                            {t('dispatches.delete')}
+                          </Button>
                         </div>
                       </div>
-                      <div className="flex gap-2">
-                        {dispatch.status === 'pending' && (
-                          <Button
-                            variant="primary"
-                            size="sm"
-                            onClick={() => handleStartDispatch(dispatch.id)}
-                          >
-                            {t('dispatches.start')}
-                          </Button>
-                        )}
-                        {dispatch.status === 'running' && (
-                          <Button
-                            variant="secondary"
-                            size="sm"
-                            onClick={() => handlePauseDispatch(dispatch.id)}
-                          >
-                            {t('dispatches.pause')}
-                          </Button>
-                        )}
-                        {dispatch.status === 'paused' && (
-                          <Button
-                            variant="primary"
-                            size="sm"
-                            onClick={() => handleResumeDispatch(dispatch.id)}
-                          >
-                            {t('dispatches.resume')}
-                          </Button>
-                        )}
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => handleDeleteDispatch(dispatch.id)}
-                        >
-                          {t('dispatches.delete')}
-                        </Button>
-                      </div>
-                    </div>
-                  </Card>
-                ))}
+                    </Card>
+                  );
+                })}
               </div>
             )}
           </div>
@@ -356,11 +431,22 @@ const Dispatches: React.FC = () => {
           initialData={editingTemplate ? { name: editingTemplate.name, type: editingTemplate.type, content: editingTemplate.content } : undefined}
         />
 
-        {/* Modal de Criação de Disparo */}
+        {/* Modal de Criação/Edição de Disparo */}
         <DispatchCreator
           isOpen={showDispatchModal}
-          onClose={() => setShowDispatchModal(false)}
+          onClose={() => {
+            setShowDispatchModal(false);
+            setEditingDispatch(null);
+          }}
           onSave={handleCreateDispatch}
+          initialData={editingDispatch ? {
+            instanceId: editingDispatch.instanceId || '',
+            templateId: editingDispatch.templateId || null,
+            name: editingDispatch.name,
+            settings: editingDispatch.settings,
+            schedule: editingDispatch.schedule,
+            defaultName: editingDispatch.defaultName || null,
+          } : undefined}
         />
       </div>
     </AppLayout>

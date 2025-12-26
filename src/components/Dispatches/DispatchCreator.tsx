@@ -7,9 +7,10 @@ interface DispatchCreatorProps {
   isOpen: boolean;
   onClose: () => void;
   onSave: (data: CreateDispatchData) => Promise<void>;
+  initialData?: Partial<CreateDispatchData>;
 }
 
-const DispatchCreator: React.FC<DispatchCreatorProps> = ({ isOpen, onClose, onSave }) => {
+const DispatchCreator: React.FC<DispatchCreatorProps> = ({ isOpen, onClose, onSave, initialData }) => {
   const { t, tArray } = useLanguage();
   const [step, setStep] = useState<'basic' | 'contacts' | 'settings' | 'schedule'>('basic');
   const [isLoading, setIsLoading] = useState(false);
@@ -46,8 +47,45 @@ const DispatchCreator: React.FC<DispatchCreatorProps> = ({ isOpen, onClose, onSa
       loadInstances();
       loadTemplates();
       loadColumns();
+      
+      // Se tem dados iniciais (edição), preencher formulário
+      if (initialData) {
+        if (initialData.name) setName(initialData.name);
+        if (initialData.instanceId) setSelectedInstanceId(initialData.instanceId);
+        if (initialData.templateId) setSelectedTemplateId(initialData.templateId);
+        if (initialData.settings) {
+          setSpeed(initialData.settings.speed);
+          setAutoDelete(initialData.settings.autoDelete || false);
+          setDeleteDelay(initialData.settings.deleteDelay || 0);
+          setDeleteDelayUnit(initialData.settings.deleteDelayUnit || 'seconds');
+        }
+        if (initialData.defaultName) setDefaultName(initialData.defaultName);
+        if (initialData.schedule) {
+          setHasSchedule(true);
+          setStartDate(initialData.schedule.startDate || '');
+          setStartTime(initialData.schedule.startTime);
+          setEndTime(initialData.schedule.endTime);
+          setSuspendedDays(initialData.schedule.suspendedDays || []);
+        }
+      } else {
+        // Resetar formulário ao criar novo
+        setName('');
+        setSelectedInstanceId('');
+        setSelectedTemplateId('');
+        setSpeed('normal');
+        setAutoDelete(false);
+        setDeleteDelay(0);
+        setDeleteDelayUnit('seconds');
+        setDefaultName('Cliente');
+        setHasSchedule(false);
+        setStartDate('');
+        setStartTime('08:00');
+        setEndTime('18:00');
+        setSuspendedDays([]);
+        setStep('basic');
+      }
     }
-  }, [isOpen]);
+  }, [isOpen, initialData]);
 
   const loadInstances = async () => {
     try {
@@ -173,18 +211,22 @@ const DispatchCreator: React.FC<DispatchCreatorProps> = ({ isOpen, onClose, onSa
       return;
     }
 
-    if (contactsSource === 'list' && processedContacts.length === 0) {
-      alert('Nenhum contato válido. Valide os contatos primeiro.');
-      return;
-    }
+    // Na edição, não validar contatos (não podem ser alterados)
+    if (!initialData) {
+      if (contactsSource === 'list' && processedContacts.length === 0) {
+        alert('Nenhum contato válido. Valide os contatos primeiro.');
+        return;
+      }
 
-    if (contactsSource === 'kanban' && selectedColumnIds.length === 0) {
-      alert('Selecione pelo menos uma coluna do Kanban');
-      return;
+      if (contactsSource === 'kanban' && selectedColumnIds.length === 0) {
+        alert('Selecione pelo menos uma coluna do Kanban');
+        return;
+      }
     }
 
     setIsLoading(true);
     try {
+      // Na edição, não incluir contatos (não podem ser alterados)
       const dispatchData: CreateDispatchData = {
         instanceId: selectedInstanceId,
         templateId: selectedTemplateId,
@@ -203,9 +245,14 @@ const DispatchCreator: React.FC<DispatchCreatorProps> = ({ isOpen, onClose, onSa
               suspendedDays,
             }
           : null,
-        contactsSource,
-        contactsData: contactsSource === 'list' ? processedContacts : undefined,
-        columnIds: contactsSource === 'kanban' ? selectedColumnIds : undefined,
+        // Só incluir contatos se não estiver editando
+        ...(!initialData ? {
+          contactsSource,
+          contactsData: contactsSource === 'list' ? processedContacts : undefined,
+          columnIds: contactsSource === 'kanban' ? selectedColumnIds : undefined,
+        } : {
+          contactsSource: 'list', // Valor padrão para edição (não será usado)
+        }),
         defaultName: defaultName || undefined,
       };
 
@@ -328,6 +375,14 @@ const DispatchCreator: React.FC<DispatchCreatorProps> = ({ isOpen, onClose, onSa
 
         {/* Step 2: Contatos */}
         {step === 'contacts' && (
+          <>
+            {initialData && (
+              <div className="mb-4 p-4 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg">
+                <p className="text-sm text-yellow-800 dark:text-yellow-200">
+                  {t('dispatchCreator.editContactsWarning')}
+                </p>
+              </div>
+            )}
           <div className="space-y-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
@@ -340,6 +395,7 @@ const DispatchCreator: React.FC<DispatchCreatorProps> = ({ isOpen, onClose, onSa
                     value="list"
                     checked={contactsSource === 'list'}
                     onChange={(e) => setContactsSource(e.target.value as 'list')}
+                    disabled={!!initialData}
                     className="mr-2"
                   />
                   {t('dispatchCreator.contactList')}
@@ -350,6 +406,7 @@ const DispatchCreator: React.FC<DispatchCreatorProps> = ({ isOpen, onClose, onSa
                     value="kanban"
                     checked={contactsSource === 'kanban'}
                     onChange={(e) => setContactsSource(e.target.value as 'kanban')}
+                    disabled={!!initialData}
                     className="mr-2"
                   />
                   {t('dispatchCreator.kanbanColumns')}
@@ -367,7 +424,8 @@ const DispatchCreator: React.FC<DispatchCreatorProps> = ({ isOpen, onClose, onSa
                     type="file"
                     accept=".csv"
                     onChange={handleCSVUpload}
-                    className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-lg dark:bg-gray-800"
+                    disabled={!!initialData}
+                    className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-lg dark:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed"
                   />
                   {csvFile && (
                     <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">Arquivo: {csvFile.name}</p>
@@ -384,11 +442,17 @@ const DispatchCreator: React.FC<DispatchCreatorProps> = ({ isOpen, onClose, onSa
                   <textarea
                     value={inputText}
                     onChange={(e) => setInputText(e.target.value)}
-                    className="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg dark:bg-gray-800 dark:text-gray-200"
+                    disabled={!!initialData}
+                    className="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg dark:bg-gray-800 dark:text-gray-200 disabled:opacity-50 disabled:cursor-not-allowed"
                     rows={6}
                     placeholder="Guilherme;5511999999999&#10;5511888888888&#10;João;5511777777777"
                   />
-                  <Button variant="outline" onClick={handleProcessInput} className="mt-2">
+                  <Button 
+                    variant="outline" 
+                    onClick={handleProcessInput} 
+                    className="mt-2"
+                    disabled={!!initialData}
+                  >
                     {t('dispatchCreator.processText')}
                   </Button>
                 </div>
@@ -439,7 +503,7 @@ const DispatchCreator: React.FC<DispatchCreatorProps> = ({ isOpen, onClose, onSa
                 <Button
                   variant="primary"
                   onClick={handleValidateContacts}
-                  disabled={isValidating || selectedColumnIds.length === 0}
+                  disabled={isValidating || selectedColumnIds.length === 0 || !!initialData}
                   className="w-full mt-4"
                 >
                   {isValidating ? t('dispatchCreator.validating') : t('dispatchCreator.validateContacts')}
@@ -456,6 +520,7 @@ const DispatchCreator: React.FC<DispatchCreatorProps> = ({ isOpen, onClose, onSa
               </Button>
             </div>
           </div>
+          </>
         )}
 
         {/* Step 3: Configurações */}
@@ -635,7 +700,10 @@ const DispatchCreator: React.FC<DispatchCreatorProps> = ({ isOpen, onClose, onSa
                 {t('dispatchCreator.back')}
               </Button>
               <Button variant="primary" onClick={handleSave} disabled={isLoading}>
-                {isLoading ? t('dispatchCreator.creating') : t('dispatchCreator.create')}
+                {isLoading 
+                  ? (initialData ? t('dispatchCreator.saving') : t('dispatchCreator.creating'))
+                  : (initialData ? t('dispatchCreator.save') : t('dispatchCreator.create'))
+                }
               </Button>
             </div>
           </div>

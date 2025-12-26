@@ -457,6 +457,8 @@ export interface Dispatch {
   id: string;
   name: string;
   status: DispatchStatus;
+  instanceId?: string;
+  templateId?: string | null;
   settings: {
     speed: 'fast' | 'normal' | 'slow' | 'randomized';
     autoDelete?: boolean;
@@ -637,6 +639,13 @@ export const dispatchAPI = {
 
   getDispatch: async (id: string): Promise<{ status: string; dispatch: Dispatch }> => {
     return request<{ status: string; dispatch: Dispatch }>(`/dispatches/${id}`);
+  },
+
+  updateDispatch: async (id: string, data: Partial<CreateDispatchData>): Promise<{ status: string; dispatch: Dispatch }> => {
+    return request<{ status: string; dispatch: Dispatch }>(`/dispatches/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    });
   },
 
   startDispatch: async (id: string): Promise<{ status: string; message: string }> => {
