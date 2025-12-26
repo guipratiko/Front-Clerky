@@ -2,6 +2,7 @@ import React from 'react';
 import { Button } from '../UI';
 import { useLanguage } from '../../contexts/LanguageContext';
 import { WorkflowContact } from '../../services/api';
+import { formatDateTime } from '../../utils/dateFormatters';
 
 interface ContactListProps {
   contacts: WorkflowContact[];
@@ -10,18 +11,7 @@ interface ContactListProps {
 }
 
 export const ContactList: React.FC<ContactListProps> = ({ contacts, onClear, isClearing = false }) => {
-  const { t } = useLanguage();
-
-  const formatDate = (dateString: string) => {
-    const date = new Date(dateString);
-    return date.toLocaleString('pt-BR', {
-      day: '2-digit',
-      month: '2-digit',
-      year: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
-    });
-  };
+  const { t, language } = useLanguage();
 
   return (
     <div className="flex flex-col max-h-[70vh]">
@@ -57,7 +47,7 @@ export const ContactList: React.FC<ContactListProps> = ({ contacts, onClear, isC
                   </p>
                 </div>
                 <p className="text-xs text-gray-500 dark:text-gray-400">
-                  {t('mindClerky.contacts.enteredAt')}: {formatDate(contact.enteredAt)}
+                  {t('mindClerky.contacts.enteredAt')}: {formatDateTime(contact.enteredAt, language as 'pt' | 'en')}
                 </p>
               </div>
             ))}

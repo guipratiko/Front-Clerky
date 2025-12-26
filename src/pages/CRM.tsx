@@ -7,6 +7,7 @@ import { crmAPI, Contact, CRMColumn, Message, instanceAPI, Instance, Label } fro
 import { useSocket, NewMessageData } from '../hooks/useSocket';
 import { sortMessagesByTimestamp, formatLastMessageContent } from '../utils/messageUtils';
 import { getInitials } from '../utils/formatters';
+import { formatTime } from '../utils/dateFormatters';
 
 // @dnd-kit imports
 import {
@@ -201,6 +202,7 @@ const ChatModal: React.FC<ChatModalProps> = ({
   zIndex = 50,
 }) => {
   const { token } = useAuth();
+  const { language } = useLanguage();
   const [messages, setMessages] = useState<Message[]>([]);
   const [newMessage, setNewMessage] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -839,10 +841,7 @@ const ChatModal: React.FC<ChatModalProps> = ({
                         <p className="text-sm whitespace-pre-wrap break-words">{msg.content}</p>
                       )}
                       <p className={`text-xs mt-1 ${msg.fromMe ? 'text-blue-100' : 'text-gray-500'}`}>
-                        {new Date(msg.timestamp).toLocaleTimeString('pt-BR', {
-                          hour: '2-digit',
-                          minute: '2-digit',
-                        })}
+                        {formatTime(msg.timestamp, language as 'pt' | 'en')}
                       </p>
                     </div>
                   </div>

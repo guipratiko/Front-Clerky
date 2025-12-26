@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Modal, Button, Input } from '../UI';
 import { instanceAPI, crmAPI, dispatchAPI, Instance, Template, CRMColumn, CreateDispatchData } from '../../services/api';
 import { useLanguage } from '../../contexts/LanguageContext';
+import { getTodayDateString } from '../../utils/dateFormatters';
 
 interface DispatchCreatorProps {
   isOpen: boolean;
@@ -40,6 +41,9 @@ const DispatchCreator: React.FC<DispatchCreatorProps> = ({ isOpen, onClose, onSa
   const [columns, setColumns] = useState<CRMColumn[]>([]);
   const [processedContacts, setProcessedContacts] = useState<Array<{ phone: string; name?: string }>>([]);
   const [isValidating, setIsValidating] = useState(false);
+  const [showValidationModal, setShowValidationModal] = useState(false);
+  const [validationStats, setValidationStats] = useState<{ total: number; valid: number; invalid: number } | null>(null);
+  const [pendingValidContacts, setPendingValidContacts] = useState<Array<{ phone: string; name?: string }>>([]);
 
   // Carregar dados iniciais
   useEffect(() => {
@@ -211,13 +215,9 @@ const DispatchCreator: React.FC<DispatchCreatorProps> = ({ isOpen, onClose, onSa
       const response = await dispatchAPI.validateContacts(selectedInstanceId, contactsToValidate);
       const validContacts = response.contacts.filter((c) => c.validated);
 
-      if (validContacts.length === 0) {
-        alert('Nenhum número válido encontrado');
-        setIsValidating(false);
-        return false;
-      }
-
-      setProcessedContacts(
+      // Armazenar estatísticas e contatos válidos
+      setValidationStats(response.stats);
+      setPendingValidContacts(
         validContacts.map((c) => ({
           phone: c.phone,
           name: c.name,
@@ -225,7 +225,16 @@ const DispatchCreator: React.FC<DispatchCreatorProps> = ({ isOpen, onClose, onSa
       );
 
       setIsValidating(false);
-      return true;
+
+      // Se não houver contatos válidos, mostrar alerta
+      if (validContacts.length === 0) {
+        alert('Nenhum número válido encontrado');
+        return false;
+      }
+
+      // Mostrar modal com estatísticas
+      setShowValidationModal(true);
+      return false; // Não prosseguir automaticamente, aguardar confirmação do modal
     } catch (error: any) {
       alert(error.message || 'Erro ao processar e validar contatos');
       setIsValidating(false);
@@ -242,7 +251,7 @@ const DispatchCreator: React.FC<DispatchCreatorProps> = ({ isOpen, onClose, onSa
 
     // Validar data de início (não pode ser no passado, mas pode ser hoje)
     if (hasSchedule && startDate) {
-      const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
+      const today = getTodayDateString();
       
       // Comparar strings de data (YYYY-MM-DD) - permite hoje ou futuro
       if (startDate < today) {
@@ -334,6 +343,7 @@ const DispatchCreator: React.FC<DispatchCreatorProps> = ({ isOpen, onClose, onSa
   };
 
   return (
+    <>
     <Modal isOpen={isOpen} onClose={onClose} title={t('dispatchCreator.title')} size="xl">
       <div className="max-h-[80vh] overflow-y-auto">
         {/* Step Indicator */}
@@ -640,7 +650,7 @@ const DispatchCreator: React.FC<DispatchCreatorProps> = ({ isOpen, onClose, onSa
                     setHasSchedule(e.target.checked);
                     // Se ativando o agendamento e não tem data, preencher com hoje
                     if (e.target.checked && !startDate) {
-                      setStartDate(new Date().toISOString().split('T')[0]);
+                      setStartDate(getTodayDateString());
                     }
                   }}
                   className="mr-2"
@@ -663,7 +673,7 @@ const DispatchCreator: React.FC<DispatchCreatorProps> = ({ isOpen, onClose, onSa
                       
                       // Permitir data de hoje ou futura
                       if (selectedDate) {
-                        const today = new Date().toISOString().split('T')[0];
+                        const today = getTodayDateString();
                         if (selectedDate < today) {
                           alert(t('dispatchCreator.invalidStartDate'));
                           setStartDate('');
@@ -673,7 +683,7 @@ const DispatchCreator: React.FC<DispatchCreatorProps> = ({ isOpen, onClose, onSa
                       
                       setStartDate(selectedDate);
                     }}
-                    min={new Date().toISOString().split('T')[0]}
+                    min={getTodayDateString()}
                     className="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg dark:bg-gray-800 dark:text-gray-200"
                   />
                   <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
@@ -754,6 +764,91 @@ const DispatchCreator: React.FC<DispatchCreatorProps> = ({ isOpen, onClose, onSa
         )}
       </div>
     </Modal>
+
+    {/* Modal de Validação de Contatos */}
+    <Modal
+      isOpen={showValidationModal}
+      onClose={() => {
+        setShowValidationModal(false);
+        setValidationStats(null);
+        setPendingValidContacts([]);
+      }}
+      title={t('dispatchCreator.validationResults')}
+    >
+      {validationStats && (
+        <div className="space-y-4">
+          <div className="p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
+            <div className="grid grid-cols-3 gap-4 text-center">
+              <div>
+                <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">
+                  {validationStats.total}
+                </p>
+                <p className="text-sm text-gray-600 dark:text-gray-400">
+                  {t('dispatchCreator.totalProcessed')}
+                </p>
+              </div>
+              <div>
+                <p className="text-2xl font-bold text-green-600 dark:text-green-400">
+                  {validationStats.valid}
+                </p>
+                <p className="text-sm text-gray-600 dark:text-gray-400">
+                  {t('dispatchCreator.validContacts')}
+                </p>
+              </div>
+              <div>
+                <p className="text-2xl font-bold text-red-600 dark:text-red-400">
+                  {validationStats.invalid}
+                </p>
+                <p className="text-sm text-gray-600 dark:text-gray-400">
+                  {t('dispatchCreator.invalidContacts')}
+                </p>
+              </div>
+            </div>
+          </div>
+
+          {validationStats.valid > 0 && (
+            <p className="text-sm text-gray-600 dark:text-gray-400 text-center">
+              {t('dispatchCreator.validationContinueMessage')}
+            </p>
+          )}
+
+          {validationStats.valid === 0 && (
+            <p className="text-sm text-red-600 dark:text-red-400 text-center font-medium">
+              {t('dispatchCreator.validationNoValidContacts')}
+            </p>
+          )}
+
+          <div className="flex justify-end gap-2 pt-4">
+            <Button
+              variant="outline"
+              onClick={() => {
+                setShowValidationModal(false);
+                setValidationStats(null);
+                setPendingValidContacts([]);
+              }}
+            >
+              {t('dispatchCreator.cancel')}
+            </Button>
+            {validationStats.valid > 0 && (
+              <Button
+                variant="primary"
+                onClick={() => {
+                  // Salvar contatos válidos e prosseguir
+                  setProcessedContacts(pendingValidContacts);
+                  setShowValidationModal(false);
+                  setValidationStats(null);
+                  setPendingValidContacts([]);
+                  setStep('settings');
+                }}
+              >
+                {t('dispatchCreator.continue')}
+              </Button>
+            )}
+          </div>
+        </div>
+      )}
+    </Modal>
+    </>
   );
 };
 
