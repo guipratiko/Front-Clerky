@@ -9,6 +9,7 @@ import { groupAPI, Group } from '../services/api';
 import { getErrorMessage, logError } from '../utils/errorHandler';
 import { parseCSVText, parseInputText } from '../utils/csvParser';
 import { useSocket } from '../hooks/useSocket';
+import * as XLSX from 'xlsx';
 
 const GroupManager: React.FC = () => {
   const { t } = useLanguage();
@@ -843,8 +844,8 @@ const GroupManager: React.FC = () => {
       });
   };
 
-  // Download de participantes em CSV/Excel
-  const handleDownloadParticipants = () => {
+  // Download de participantes em CSV
+  const handleDownloadParticipantsCSV = () => {
     if (groupParticipants.length === 0) {
       alert(t('groupManager.noParticipantsToDownload'));
       return;
@@ -872,6 +873,37 @@ const GroupManager: React.FC = () => {
     link.click();
     document.body.removeChild(link);
     URL.revokeObjectURL(url);
+  };
+
+  // Download de participantes em XLSX
+  const handleDownloadParticipantsXLSX = () => {
+    if (groupParticipants.length === 0) {
+      alert(t('groupManager.noParticipantsToDownload'));
+      return;
+    }
+
+    // Preparar dados para Excel
+    const data = [
+      ['Nome', 'Número'], // Cabeçalho
+      ...groupParticipants.map((p) => [
+        p.name || t('groupManager.unknown'),
+        p.phone || p.id || '',
+      ]),
+    ];
+
+    // Criar workbook e worksheet
+    const ws = XLSX.utils.aoa_to_sheet(data);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Participantes');
+
+    // Ajustar largura das colunas
+    ws['!cols'] = [
+      { wch: 30 }, // Coluna Nome
+      { wch: 20 }, // Coluna Número
+    ];
+
+    // Gerar arquivo XLSX e fazer download
+    XLSX.writeFile(wb, `${selectedGroup?.name || 'grupo'}_participantes.xlsx`);
   };
 
   // Aplicar edições em massa
@@ -1819,14 +1851,24 @@ const GroupManager: React.FC = () => {
                     {t('groupManager.participants')} ({groupParticipants.length || selectedGroup.participants?.length || 0})
                   </label>
                   {groupParticipants.length > 0 && (
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => handleDownloadParticipants()}
-                      className="text-xs"
-                    >
-                      {t('groupManager.downloadParticipants')}
-                    </Button>
+                    <div className="flex gap-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleDownloadParticipantsCSV()}
+                        className="text-xs"
+                      >
+                        {t('groupManager.downloadCSV')}
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleDownloadParticipantsXLSX()}
+                        className="text-xs"
+                      >
+                        {t('groupManager.downloadXLSX')}
+                      </Button>
+                    </div>
                   )}
                 </div>
                 {isLoadingParticipants ? (
