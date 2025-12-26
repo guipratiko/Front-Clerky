@@ -238,6 +238,7 @@ const translations = {
     'dispatches.deleteTemplateConfirm': 'Tem certeza que deseja deletar este template?',
     'dispatches.instance': 'Instância',
     'dispatches.template': 'Template',
+    'dispatches.speed': 'Velocidade',
     'dispatches.scheduledFor': 'Agendado para',
     // Dispatch Creator
     'dispatchCreator.title': 'Criar Disparo',
@@ -266,6 +267,7 @@ const translations = {
     'dispatchCreator.contactsProcessed': 'contato(s) processado(s)',
     'dispatchCreator.validateContacts': 'Validar Contatos',
     'dispatchCreator.validating': 'Validando...',
+    'dispatchCreator.processing': 'Processando...',
     'dispatchCreator.selectColumns': 'Selecione as Colunas',
     'dispatchCreator.speed': 'Velocidade do Disparo',
     'dispatchCreator.speedFast': 'Rápido (1 segundo) - Listas pequenas',
@@ -1073,6 +1075,7 @@ const translations = {
     'dispatches.deleteTemplateConfirm': 'Are you sure you want to delete this template?',
     'dispatches.instance': 'Instance',
     'dispatches.template': 'Template',
+    'dispatches.speed': 'Speed',
     'dispatches.scheduledFor': 'Scheduled for',
     // Dispatch Creator
     'dispatchCreator.title': 'Create Dispatch',
@@ -1101,6 +1104,7 @@ const translations = {
     'dispatchCreator.contactsProcessed': 'contact(s) processed',
     'dispatchCreator.validateContacts': 'Validate Contacts',
     'dispatchCreator.validating': 'Validating...',
+    'dispatchCreator.processing': 'Processing...',
     'dispatchCreator.selectColumns': 'Select Columns',
     'dispatchCreator.speed': 'Dispatch Speed',
     'dispatchCreator.speedFast': 'Fast (1 second) - Small lists',

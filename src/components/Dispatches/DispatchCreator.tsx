@@ -114,18 +114,14 @@ const DispatchCreator: React.FC<DispatchCreatorProps> = ({ isOpen, onClose, onSa
     }
   };
 
-  // Processar CSV
-  const handleCSVUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  // Armazenar arquivo CSV (será processado ao clicar em "próximo")
+  const handleCSVUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
     setCsvFile(file);
-    try {
-      const response = await dispatchAPI.uploadCSV(file);
-      setProcessedContacts(response.contacts);
-    } catch (error: any) {
-      alert(error.message || 'Erro ao processar CSV');
-    }
+    // Limpar contatos processados anteriormente quando novo arquivo é selecionado
+    setProcessedContacts([]);
   };
 
   // Processar texto de entrada
@@ -143,21 +139,16 @@ const DispatchCreator: React.FC<DispatchCreatorProps> = ({ isOpen, onClose, onSa
     }
   };
 
-  // Validar contatos
-  const handleValidateContacts = async () => {
+  // Processar e validar contatos automaticamente
+  const handleProcessAndValidateContacts = async (): Promise<boolean> => {
     if (!selectedInstanceId) {
       alert('Selecione uma instância primeiro');
-      return;
+      return false;
     }
 
-    if (contactsSource === 'list' && processedContacts.length === 0) {
-      alert('Nenhum contato processado. Faça upload de CSV ou cole os contatos.');
-      return;
-    }
-
-    if (contactsSource === 'kanban' && selectedColumnIds.length === 0) {
-      alert('Selecione pelo menos uma coluna do Kanban');
-      return;
+    // Se for edição, não precisa processar/validar
+    if (initialData) {
+      return true;
     }
 
     setIsValidating(true);
@@ -165,8 +156,44 @@ const DispatchCreator: React.FC<DispatchCreatorProps> = ({ isOpen, onClose, onSa
       let contactsToValidate: Array<{ phone: string; name?: string }> = [];
 
       if (contactsSource === 'list') {
-        contactsToValidate = processedContacts;
+        // Se tem CSV mas não foi processado, processar primeiro
+        if (csvFile && processedContacts.length === 0) {
+          try {
+            const csvResponse = await dispatchAPI.uploadCSV(csvFile);
+            contactsToValidate = csvResponse.contacts;
+          } catch (error: any) {
+            alert(error.message || 'Erro ao processar CSV');
+            setIsValidating(false);
+            return false;
+          }
+        }
+        // Se tem texto mas não foi processado, processar primeiro
+        else if (inputText.trim() && processedContacts.length === 0) {
+          try {
+            const processResponse = await dispatchAPI.processInput(inputText);
+            contactsToValidate = processResponse.contacts;
+          } catch (error: any) {
+            alert(error.message || 'Erro ao processar texto');
+            setIsValidating(false);
+            return false;
+          }
+        } else {
+          contactsToValidate = processedContacts;
+        }
+
+        if (contactsToValidate.length === 0) {
+          alert('Nenhum contato encontrado. Faça upload de CSV ou cole os contatos.');
+          setIsValidating(false);
+          return false;
+        }
       } else {
+        // Kanban
+        if (selectedColumnIds.length === 0) {
+          alert('Selecione pelo menos uma coluna do Kanban');
+          setIsValidating(false);
+          return false;
+        }
+
         // Buscar contatos das colunas selecionadas
         for (const columnId of selectedColumnIds) {
           const response = await crmAPI.getContacts();
@@ -180,12 +207,14 @@ const DispatchCreator: React.FC<DispatchCreatorProps> = ({ isOpen, onClose, onSa
         }
       }
 
+      // Validar contatos
       const response = await dispatchAPI.validateContacts(selectedInstanceId, contactsToValidate);
       const validContacts = response.contacts.filter((c) => c.validated);
 
       if (validContacts.length === 0) {
         alert('Nenhum número válido encontrado');
-        return;
+        setIsValidating(false);
+        return false;
       }
 
       setProcessedContacts(
@@ -195,12 +224,12 @@ const DispatchCreator: React.FC<DispatchCreatorProps> = ({ isOpen, onClose, onSa
         }))
       );
 
-      alert(`${validContacts.length} contato(s) válido(s) de ${response.stats.total} total`);
-      setStep('settings');
-    } catch (error: any) {
-      alert(error.message || 'Erro ao validar contatos');
-    } finally {
       setIsValidating(false);
+      return true;
+    } catch (error: any) {
+      alert(error.message || 'Erro ao processar e validar contatos');
+      setIsValidating(false);
+      return false;
     }
   };
 
@@ -458,14 +487,6 @@ const DispatchCreator: React.FC<DispatchCreatorProps> = ({ isOpen, onClose, onSa
                     rows={6}
                     placeholder="Guilherme;5511999999999&#10;5511888888888&#10;João;5511777777777"
                   />
-                  <Button 
-                    variant="outline" 
-                    onClick={handleProcessInput} 
-                    className="mt-2"
-                    disabled={!!initialData}
-                  >
-                    {t('dispatchCreator.processText')}
-                  </Button>
                 </div>
 
                 {processedContacts.length > 0 && (
@@ -475,15 +496,6 @@ const DispatchCreator: React.FC<DispatchCreatorProps> = ({ isOpen, onClose, onSa
                     </p>
                   </div>
                 )}
-
-                <Button
-                  variant="primary"
-                  onClick={handleValidateContacts}
-                  disabled={isValidating || processedContacts.length === 0}
-                  className="w-full"
-                >
-                  {isValidating ? t('dispatchCreator.validating') : t('dispatchCreator.validateContacts')}
-                </Button>
               </div>
             )}
 
@@ -511,14 +523,6 @@ const DispatchCreator: React.FC<DispatchCreatorProps> = ({ isOpen, onClose, onSa
                     </label>
                   ))}
                 </div>
-                <Button
-                  variant="primary"
-                  onClick={handleValidateContacts}
-                  disabled={isValidating || selectedColumnIds.length === 0 || !!initialData}
-                  className="w-full mt-4"
-                >
-                  {isValidating ? t('dispatchCreator.validating') : t('dispatchCreator.validateContacts')}
-                </Button>
               </div>
             )}
 
@@ -526,8 +530,17 @@ const DispatchCreator: React.FC<DispatchCreatorProps> = ({ isOpen, onClose, onSa
               <Button variant="outline" onClick={() => setStep('basic')}>
                 {t('dispatchCreator.back')}
               </Button>
-              <Button variant="primary" onClick={() => setStep('settings')}>
-                {t('dispatchCreator.next')}
+              <Button 
+                variant="primary" 
+                onClick={async () => {
+                  const success = await handleProcessAndValidateContacts();
+                  if (success) {
+                    setStep('settings');
+                  }
+                }}
+                disabled={isValidating}
+              >
+                {isValidating ? t('dispatchCreator.processing') : t('dispatchCreator.next')}
               </Button>
             </div>
           </div>
@@ -623,7 +636,13 @@ const DispatchCreator: React.FC<DispatchCreatorProps> = ({ isOpen, onClose, onSa
                 <input
                   type="checkbox"
                   checked={hasSchedule}
-                  onChange={(e) => setHasSchedule(e.target.checked)}
+                  onChange={(e) => {
+                    setHasSchedule(e.target.checked);
+                    // Se ativando o agendamento e não tem data, preencher com hoje
+                    if (e.target.checked && !startDate) {
+                      setStartDate(new Date().toISOString().split('T')[0]);
+                    }
+                  }}
                   className="mr-2"
                 />
                 {t('dispatchCreator.schedule')}

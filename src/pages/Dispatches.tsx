@@ -331,6 +331,15 @@ const Dispatches: React.FC = () => {
                     return date ? `${date} às ${time}` : time;
                   };
 
+                  // Formatar velocidade
+                  const getSpeedLabel = () => {
+                    const speed = dispatch.settings.speed;
+                    const speedKey = `dispatchCreator.speed${speed.charAt(0).toUpperCase() + speed.slice(1)}`;
+                    const fullLabel = t(speedKey);
+                    // Extrair apenas o nome da velocidade (antes do parêntese)
+                    return fullLabel.split('(')[0].trim();
+                  };
+
                   return (
                     <Card key={dispatch.id} className="p-4">
                       <div className="flex justify-between items-start">
@@ -359,6 +368,10 @@ const Dispatches: React.FC = () => {
                                 <span>{template.name}</span>
                               </div>
                             )}
+                            <div className="flex gap-4 flex-wrap">
+                              <span className="font-medium">{t('dispatches.speed')}:</span>
+                              <span>{getSpeedLabel()}</span>
+                            </div>
                             {dispatch.schedule && (
                               <div className="flex gap-4 flex-wrap">
                                 <span className="font-medium">{t('dispatches.scheduledFor')}:</span>
