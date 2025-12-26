@@ -211,14 +211,12 @@ const DispatchCreator: React.FC<DispatchCreatorProps> = ({ isOpen, onClose, onSa
       return;
     }
 
-    // Validar data de início (não pode ser no passado)
+    // Validar data de início (não pode ser no passado, mas pode ser hoje)
     if (hasSchedule && startDate) {
-      const selectedDate = new Date(startDate);
-      const today = new Date();
-      today.setHours(0, 0, 0, 0);
-      selectedDate.setHours(0, 0, 0, 0);
+      const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
       
-      if (selectedDate < today) {
+      // Comparar strings de data (YYYY-MM-DD) - permite hoje ou futuro
+      if (startDate < today) {
         alert(t('dispatchCreator.invalidStartDate'));
         return;
       }
@@ -643,12 +641,15 @@ const DispatchCreator: React.FC<DispatchCreatorProps> = ({ isOpen, onClose, onSa
                     value={startDate}
                     onChange={(e) => {
                       const selectedDate = e.target.value;
-                      const today = new Date().toISOString().split('T')[0];
                       
-                      if (selectedDate < today) {
-                        alert(t('dispatchCreator.invalidStartDate'));
-                        setStartDate('');
-                        return;
+                      // Permitir data de hoje ou futura
+                      if (selectedDate) {
+                        const today = new Date().toISOString().split('T')[0];
+                        if (selectedDate < today) {
+                          alert(t('dispatchCreator.invalidStartDate'));
+                          setStartDate('');
+                          return;
+                        }
                       }
                       
                       setStartDate(selectedDate);
