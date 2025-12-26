@@ -211,6 +211,19 @@ const DispatchCreator: React.FC<DispatchCreatorProps> = ({ isOpen, onClose, onSa
       return;
     }
 
+    // Validar data de início (não pode ser no passado)
+    if (hasSchedule && startDate) {
+      const selectedDate = new Date(startDate);
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      selectedDate.setHours(0, 0, 0, 0);
+      
+      if (selectedDate < today) {
+        alert(t('dispatchCreator.invalidStartDate'));
+        return;
+      }
+    }
+
     // Na edição, não validar contatos (não podem ser alterados)
     if (!initialData) {
       if (contactsSource === 'list' && processedContacts.length === 0) {
@@ -628,7 +641,18 @@ const DispatchCreator: React.FC<DispatchCreatorProps> = ({ isOpen, onClose, onSa
                   <input
                     type="date"
                     value={startDate}
-                    onChange={(e) => setStartDate(e.target.value)}
+                    onChange={(e) => {
+                      const selectedDate = e.target.value;
+                      const today = new Date().toISOString().split('T')[0];
+                      
+                      if (selectedDate < today) {
+                        alert(t('dispatchCreator.invalidStartDate'));
+                        setStartDate('');
+                        return;
+                      }
+                      
+                      setStartDate(selectedDate);
+                    }}
                     min={new Date().toISOString().split('T')[0]}
                     className="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg dark:bg-gray-800 dark:text-gray-200"
                   />

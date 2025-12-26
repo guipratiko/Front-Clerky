@@ -65,6 +65,7 @@ const Dispatches: React.FC = () => {
     if (activeTab === 'templates') {
       loadTemplates();
     } else {
+      loadTemplates(); // Carregar templates também para exibir no card
       loadDispatches();
       loadInstances();
     }
