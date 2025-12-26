@@ -464,6 +464,7 @@ export interface Dispatch {
     deleteDelayUnit?: 'seconds' | 'minutes' | 'hours';
   };
   schedule?: {
+    startDate?: string;
     startTime: string;
     endTime: string;
     suspendedDays: number[];
@@ -491,6 +492,7 @@ export interface CreateDispatchData {
     deleteDelayUnit?: 'seconds' | 'minutes' | 'hours';
   };
   schedule?: {
+    startDate?: string;
     startTime: string;
     endTime: string;
     suspendedDays: number[];
