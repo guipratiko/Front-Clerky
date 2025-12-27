@@ -90,6 +90,10 @@ const DispatchCreator: React.FC<DispatchCreatorProps> = ({ isOpen, onClose, onSa
         setEndTime('18:00');
         setSuspendedDays([]);
         setStep('basic');
+        setInputText('');
+        setProcessedContacts([]);
+        setCsvFile(null);
+        setSelectedColumnIds([]);
       }
     }
   }, [isOpen, initialData]);
@@ -495,7 +499,14 @@ const DispatchCreator: React.FC<DispatchCreatorProps> = ({ isOpen, onClose, onSa
                   </label>
                   <textarea
                     value={inputText}
-                    onChange={(e) => setInputText(e.target.value)}
+                    onChange={(e) => {
+                      setInputText(e.target.value);
+                      // Limpar contatos processados quando o texto for modificado
+                      // Isso permite que o usuário edite e reprocesse os contatos
+                      if (processedContacts.length > 0) {
+                        setProcessedContacts([]);
+                      }
+                    }}
                     disabled={!!initialData}
                     className="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg dark:bg-gray-800 dark:text-gray-200 disabled:opacity-50 disabled:cursor-not-allowed"
                     rows={6}
