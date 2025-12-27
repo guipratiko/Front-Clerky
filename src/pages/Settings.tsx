@@ -12,6 +12,7 @@ interface ProfileFormData {
   companyName: string;
   phone: string;
   profilePicture: string | null;
+  timezone: string;
 }
 
 interface PasswordFormData {
@@ -32,6 +33,7 @@ const Settings: React.FC = () => {
     companyName: '',
     phone: '',
     profilePicture: null,
+    timezone: 'America/Sao_Paulo',
   });
 
   // Estados do formulário de senha
@@ -67,6 +69,7 @@ const Settings: React.FC = () => {
         companyName: user.companyName || '',
         phone: user.phone ? formatPhone(user.phone) : '',
         profilePicture: user.profilePicture || null,
+        timezone: user.timezone || 'America/Sao_Paulo',
       });
     }
   }, [user]);
@@ -323,6 +326,7 @@ const Settings: React.FC = () => {
         companyName: normalizedCompanyName,
         phone: normalizedPhone,
         profilePicture: profileData.profilePicture,
+        timezone: profileData.timezone,
       });
 
       updateUser(response.user);
@@ -488,6 +492,44 @@ const Settings: React.FC = () => {
                 placeholder={t('settings.phonePlaceholder')}
                 error={profileErrors.phone}
               />
+
+              {/* Fuso Horário */}
+              <div>
+                <label className="block text-sm font-medium text-clerky-backendText dark:text-gray-200 mb-2">
+                  {t('settings.timezone')}
+                </label>
+                <select
+                  name="timezone"
+                  value={profileData.timezone}
+                  onChange={(e) => setProfileData({ ...profileData, timezone: e.target.value })}
+                  className="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg dark:bg-gray-800 dark:text-gray-200"
+                >
+                  <option value="America/Sao_Paulo">Brasil (São Paulo) - GMT-3</option>
+                  <option value="America/Manaus">Brasil (Manaus) - GMT-4</option>
+                  <option value="America/Rio_Branco">Brasil (Rio Branco) - GMT-5</option>
+                  <option value="America/New_York">EUA (Nova York) - GMT-5/-4</option>
+                  <option value="America/Chicago">EUA (Chicago) - GMT-6/-5</option>
+                  <option value="America/Denver">EUA (Denver) - GMT-7/-6</option>
+                  <option value="America/Los_Angeles">EUA (Los Angeles) - GMT-8/-7</option>
+                  <option value="Europe/London">Reino Unido (Londres) - GMT+0/+1</option>
+                  <option value="Europe/Paris">França (Paris) - GMT+1/+2</option>
+                  <option value="Europe/Madrid">Espanha (Madrid) - GMT+1/+2</option>
+                  <option value="Europe/Rome">Itália (Roma) - GMT+1/+2</option>
+                  <option value="Europe/Berlin">Alemanha (Berlim) - GMT+1/+2</option>
+                  <option value="Asia/Tokyo">Japão (Tóquio) - GMT+9</option>
+                  <option value="Asia/Shanghai">China (Xangai) - GMT+8</option>
+                  <option value="Asia/Dubai">Emirados Árabes (Dubai) - GMT+4</option>
+                  <option value="Australia/Sydney">Austrália (Sydney) - GMT+10/+11</option>
+                  <option value="America/Argentina/Buenos_Aires">Argentina (Buenos Aires) - GMT-3</option>
+                  <option value="America/Mexico_City">México (Cidade do México) - GMT-6/-5</option>
+                  <option value="America/Lima">Peru (Lima) - GMT-5</option>
+                  <option value="America/Bogota">Colômbia (Bogotá) - GMT-5</option>
+                  <option value="America/Santiago">Chile (Santiago) - GMT-3/-4</option>
+                </select>
+                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                  {t('settings.timezoneHint')}
+                </p>
+              </div>
 
               <Button
                 type="submit"

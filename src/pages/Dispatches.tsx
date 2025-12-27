@@ -324,11 +324,15 @@ const Dispatches: React.FC = () => {
                   // Formatar data e hora do agendamento
                   const formatSchedule = () => {
                     if (!dispatch.schedule) return null;
-                    const date = dispatch.schedule.startDate 
-                      ? new Date(dispatch.schedule.startDate).toLocaleDateString('pt-BR')
-                      : null;
-                    const time = dispatch.schedule.startTime;
-                    return date ? `${date} às ${time}` : time;
+                    if (dispatch.schedule.startDate) {
+                      // Formatar data diretamente sem usar new Date() para evitar problemas de timezone
+                      // startDate vem no formato "YYYY-MM-DD"
+                      const [year, month, day] = dispatch.schedule.startDate.split('-');
+                      const date = `${day}/${month}/${year}`;
+                      const time = dispatch.schedule.startTime;
+                      return `${date} às ${time}`;
+                    }
+                    return dispatch.schedule.startTime;
                   };
 
                   // Formatar velocidade

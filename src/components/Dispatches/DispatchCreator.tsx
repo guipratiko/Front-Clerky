@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Modal, Button, Input } from '../UI';
 import { instanceAPI, crmAPI, dispatchAPI, Instance, Template, CRMColumn, CreateDispatchData } from '../../services/api';
 import { useLanguage } from '../../contexts/LanguageContext';
+import { useAuth } from '../../contexts/AuthContext';
 
 interface DispatchCreatorProps {
   isOpen: boolean;
@@ -12,6 +13,7 @@ interface DispatchCreatorProps {
 
 const DispatchCreator: React.FC<DispatchCreatorProps> = ({ isOpen, onClose, onSave, initialData }) => {
   const { t, tArray } = useLanguage();
+  const { user } = useAuth();
   const [step, setStep] = useState<'basic' | 'contacts' | 'settings' | 'schedule'>('basic');
   const [isLoading, setIsLoading] = useState(false);
 
@@ -33,6 +35,7 @@ const DispatchCreator: React.FC<DispatchCreatorProps> = ({ isOpen, onClose, onSa
   const [startTime, setStartTime] = useState('08:00');
   const [endTime, setEndTime] = useState('18:00');
   const [suspendedDays, setSuspendedDays] = useState<number[]>([]);
+  const [scheduleTimezone, setScheduleTimezone] = useState<string | null>(null); // null = usar timezone do perfil
 
   // Dados carregados
   const [instances, setInstances] = useState<Instance[]>([]);
@@ -283,6 +286,7 @@ const DispatchCreator: React.FC<DispatchCreatorProps> = ({ isOpen, onClose, onSa
               startTime,
               endTime,
               suspendedDays,
+              timezone: scheduleTimezone || undefined, // Se null, usar timezone do perfil no backend
             }
           : null,
         // Só incluir contatos se não estiver editando
@@ -703,6 +707,34 @@ const DispatchCreator: React.FC<DispatchCreatorProps> = ({ isOpen, onClose, onSa
                       className="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg dark:bg-gray-800 dark:text-gray-200"
                     />
                   </div>
+                </div>
+
+                {/* Fuso Horário (Opcional) */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    {t('dispatchCreator.timezone')} {t('dispatchCreator.optional')}
+                  </label>
+                  <select
+                    value={scheduleTimezone || ''}
+                    onChange={(e) => setScheduleTimezone(e.target.value || null)}
+                    className="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg dark:bg-gray-800 dark:text-gray-200"
+                  >
+                    <option value="">{t('dispatchCreator.useProfileTimezone')} ({user?.timezone || 'America/Sao_Paulo'})</option>
+                    <option value="America/Sao_Paulo">Brasil (São Paulo) - GMT-3</option>
+                    <option value="America/Manaus">Brasil (Manaus) - GMT-4</option>
+                    <option value="America/Rio_Branco">Brasil (Rio Branco) - GMT-5</option>
+                    <option value="America/New_York">EUA (Nova York) - GMT-5/-4</option>
+                    <option value="America/Chicago">EUA (Chicago) - GMT-6/-5</option>
+                    <option value="America/Los_Angeles">EUA (Los Angeles) - GMT-8/-7</option>
+                    <option value="Europe/London">Reino Unido (Londres) - GMT+0/+1</option>
+                    <option value="Europe/Paris">França (Paris) - GMT+1/+2</option>
+                    <option value="Asia/Tokyo">Japão (Tóquio) - GMT+9</option>
+                    <option value="Asia/Shanghai">China (Xangai) - GMT+8</option>
+                    <option value="Australia/Sydney">Austrália (Sydney) - GMT+10/+11</option>
+                  </select>
+                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                    {t('dispatchCreator.timezoneHint')}
+                  </p>
                 </div>
 
                 <div>

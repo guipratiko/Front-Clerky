@@ -20,6 +20,7 @@ export interface User {
   profilePicture?: string | null;
   companyName?: string | null;
   phone?: string | null;
+  timezone?: string;
 }
 
 export interface AuthResponse {
@@ -34,6 +35,7 @@ export interface UpdateProfileData {
   profilePicture?: string | null;
   companyName?: string | null;
   phone?: string | null;
+  timezone?: string;
 }
 
 export interface ChangePasswordData {
@@ -498,6 +500,7 @@ export interface CreateDispatchData {
     startTime: string;
     endTime: string;
     suspendedDays: number[];
+    timezone?: string; // Fuso horário opcional para o agendamento
   } | null;
   contactsSource: 'list' | 'kanban';
   contactsData?: Array<{ phone: string; name?: string }>;
