@@ -733,7 +733,7 @@ const DispatchCreator: React.FC<DispatchCreatorProps> = ({ isOpen, onClose, onSa
                 {/* Fuso Horário (Opcional) */}
                 <div>
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    {t('dispatchCreator.timezone')} {t('dispatchCreator.optional')}
+                    {t('dispatchCreator.timezone')} (Opcional)
                   </label>
                   <select
                     value={scheduleTimezone || ''}
