@@ -4,6 +4,7 @@ import { useLanguage } from '../../../contexts/LanguageContext';
 
 export interface TriggerNodeData {
   instanceId?: string;
+  instanceName?: string; // Nome da instância para exibição no card
 }
 
 export const TriggerNode: React.FC<NodeProps> = ({ data, selected }) => {
@@ -39,7 +40,7 @@ export const TriggerNode: React.FC<NodeProps> = ({ data, selected }) => {
         </div>
         {nodeData.instanceId ? (
           <p className="text-xs text-white/80 truncate">
-            {nodeData.instanceId}
+            {nodeData.instanceName || nodeData.instanceId}
           </p>
         ) : (
           <p className="text-xs text-white/60 italic">

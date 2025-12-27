@@ -6,6 +6,7 @@ export interface OpenAINodeData {
   apiKey?: string;
   model?: string;
   prompt?: string;
+  responseDelay?: number; // Delay em milissegundos
 }
 
 export const OpenAINode: React.FC<NodeProps> = ({ data, selected }) => {
@@ -45,6 +46,11 @@ export const OpenAINode: React.FC<NodeProps> = ({ data, selected }) => {
                 <p className="text-xs text-white/70 truncate">
                   {nodeData.prompt.substring(0, 30)}
                   {nodeData.prompt.length > 30 ? '...' : ''}
+                </p>
+              )}
+              {nodeData.responseDelay && nodeData.responseDelay > 0 && (
+                <p className="text-xs text-white/70 font-medium mt-1">
+                  ⏱️ Delay: {(nodeData.responseDelay / 1000).toFixed(1)}s
                 </p>
               )}
             </>

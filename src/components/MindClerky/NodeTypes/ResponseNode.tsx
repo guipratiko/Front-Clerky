@@ -8,6 +8,7 @@ export interface ResponseNodeData {
   mediaUrl?: string;
   caption?: string;
   fileName?: string;
+  responseDelay?: number; // Delay em milissegundos
 }
 
 export const ResponseNode: React.FC<NodeProps> = ({ data, selected }) => {
@@ -90,6 +91,11 @@ export const ResponseNode: React.FC<NodeProps> = ({ data, selected }) => {
           {!nodeData.content && !nodeData.caption && !nodeData.fileName && responseType === 'text' && (
             <p className="text-xs text-white/60 italic">
               {t('mindClerky.nodeSettings.configureResponse')}
+            </p>
+          )}
+          {nodeData.responseDelay && nodeData.responseDelay > 0 && (
+            <p className="text-xs text-white/70 font-medium mt-1">
+              ⏱️ Delay: {(nodeData.responseDelay / 1000).toFixed(1)}s
             </p>
           )}
         </div>

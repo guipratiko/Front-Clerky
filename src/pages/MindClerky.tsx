@@ -199,13 +199,13 @@ const MindClerky: React.FC = () => {
           : type === 'delay' 
           ? { delay: 0, delayUnit: 'seconds' } 
           : type === 'response'
-          ? { responseType: 'text', content: '' }
+          ? { responseType: 'text', content: '', responseDelay: 1200 } // Delay padrão: 1.2s (1200ms)
           : type === 'typebotTrigger'
           ? { webhookUrl: '', workflowId: selectedWorkflow?.id || '' }
           : type === 'spreadsheet'
           ? { isAuthenticated: false, sheetName: 'Sheet1' }
           : type === 'openai'
-          ? { apiKey: '', model: 'gpt-3.5-turbo', prompt: '' }
+          ? { apiKey: '', model: 'gpt-3.5-turbo', prompt: '', responseDelay: 1200 } // Delay padrão: 1.2s (1200ms)
           : {},
     };
     setWorkflowNodes([...workflowNodes, newNode]);
@@ -630,7 +630,14 @@ const NodeSettingsPanel: React.FC<NodeSettingsPanelProps> = ({ node, instances, 
           </label>
           <select
             value={triggerData.instanceId || ''}
-            onChange={(e) => onUpdate({ instanceId: e.target.value })}
+            onChange={(e) => {
+              const selectedInstanceId = e.target.value;
+              const selectedInstance = instances.find(inst => inst.id === selectedInstanceId);
+              onUpdate({ 
+                instanceId: selectedInstanceId || undefined,
+                instanceName: selectedInstance?.name || undefined
+              });
+            }}
             className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-clerky-backendButton focus:border-transparent bg-white dark:bg-gray-700 text-clerky-backendText dark:text-gray-200"
           >
             <option value="">{t('mindClerky.nodeSettings.selectInstance')}</option>
@@ -794,8 +801,11 @@ const NodeSettingsPanel: React.FC<NodeSettingsPanelProps> = ({ node, instances, 
       caption?: string;
       fileName?: string;
       responseInstanceId?: string;
+      responseDelay?: number; // Delay em milissegundos (armazenado internamente)
     };
     const responseType = responseData.responseType || 'text';
+    // Converter delay de milissegundos para segundos para exibição (padrão: 1.2s = 1200ms)
+    const delayInSeconds = responseData.responseDelay ? responseData.responseDelay / 1000 : 1.2;
 
     return (
       <div className="space-y-4">
@@ -881,6 +891,30 @@ const NodeSettingsPanel: React.FC<NodeSettingsPanelProps> = ({ node, instances, 
           </select>
         </div>
 
+        {/* Campo de Delay (em segundos) */}
+        <div>
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+            {t('mindClerky.nodeSettings.delay') || 'Delay (segundos)'}
+          </label>
+          <input
+            type="number"
+            step="0.1"
+            min="0"
+            value={delayInSeconds}
+            onChange={(e) => {
+              const seconds = parseFloat(e.target.value) || 0;
+              // Converter segundos para milissegundos ao salvar
+              const milliseconds = Math.round(seconds * 1000);
+              onUpdate({ responseDelay: milliseconds });
+            }}
+            className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-clerky-backendButton focus:border-transparent bg-white dark:bg-gray-700 text-clerky-backendText dark:text-gray-200"
+            placeholder="1.5"
+          />
+          <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+            {t('mindClerky.nodeSettings.delayHelper') || 'Tempo de espera antes de enviar a mensagem para simular digitação (em segundos). Ex: 1.5 = 1 segundo e meio'}
+          </p>
+        </div>
+
         {/* Campos baseados no tipo */}
         {responseType === 'text' && (
           <div>
@@ -956,7 +990,14 @@ const NodeSettingsPanel: React.FC<NodeSettingsPanelProps> = ({ node, instances, 
   }
 
   if (node.type === 'openai') {
-    const openaiData = node.data as { apiKey?: string; model?: string; prompt?: string };
+    const openaiData = node.data as { 
+      apiKey?: string; 
+      model?: string; 
+      prompt?: string;
+      responseDelay?: number; // Delay em milissegundos (armazenado internamente)
+    };
+    // Converter delay de milissegundos para segundos para exibição (padrão: 1.2s = 1200ms)
+    const delayInSeconds = openaiData.responseDelay ? openaiData.responseDelay / 1000 : 1.2;
     const models = [
       'gpt-4',
       'gpt-4-turbo',
@@ -1010,6 +1051,30 @@ const NodeSettingsPanel: React.FC<NodeSettingsPanelProps> = ({ node, instances, 
           />
           <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
             {t('mindClerky.nodeSettings.openaiPromptDescription')}
+          </p>
+        </div>
+        
+        {/* Campo de Delay (em segundos) - usado quando conectado ao nó de resposta */}
+        <div>
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+            {t('mindClerky.nodeSettings.responseDelay') || 'Tempo de Espera na Resposta (segundos)'}
+          </label>
+          <input
+            type="number"
+            step="0.1"
+            min="0"
+            value={delayInSeconds}
+            onChange={(e) => {
+              const seconds = parseFloat(e.target.value) || 0;
+              // Converter segundos para milissegundos ao salvar
+              const milliseconds = Math.round(seconds * 1000);
+              onUpdate({ responseDelay: milliseconds });
+            }}
+            className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-clerky-backendButton focus:border-transparent bg-white dark:bg-gray-700 text-clerky-backendText dark:text-gray-200"
+            placeholder="1.5"
+          />
+          <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+            {t('mindClerky.nodeSettings.openaiDelayHelper') || 'Tempo de espera antes de enviar a resposta da IA (em segundos). Este delay será usado no nó de resposta quando conectado ao OpenAI. Ex: 1.5 = 1 segundo e meio'}
           </p>
         </div>
       </div>

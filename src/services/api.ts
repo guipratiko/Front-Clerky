@@ -1,6 +1,7 @@
 import type { AssistedConfig } from '../types/aiAgent';
 
 const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:4331/api';
+const MINDLERKY_API_URL = process.env.REACT_APP_MINDLERKY_URL || 'http://localhost:4333/api';
 
 export interface LoginData {
   email: string;
@@ -143,6 +144,36 @@ const request = async <T>(
   };
 
   const response = await fetch(`${API_URL}${endpoint}`, config);
+  const data = await response.json();
+
+  if (!response.ok) {
+    const error: ApiError = {
+      status: data.status || 'error',
+      message: data.message || 'Erro ao processar requisição. Tente novamente.',
+    };
+    throw error;
+  }
+
+  return data;
+};
+
+// Função auxiliar para fazer requisições ao MindClerky
+const requestMindClerky = async <T>(
+  endpoint: string,
+  options: RequestInit = {}
+): Promise<T> => {
+  const token = localStorage.getItem('token');
+  
+  const config: RequestInit = {
+    headers: {
+      'Content-Type': 'application/json',
+      ...(token && { Authorization: `Bearer ${token}` }),
+      ...options.headers,
+    },
+    ...options,
+  };
+
+  const response = await fetch(`${MINDLERKY_API_URL}${endpoint}`, config);
   const data = await response.json();
 
   if (!response.ok) {
@@ -683,6 +714,7 @@ export interface WorkflowNode {
   position: { x: number; y: number };
   data: {
     instanceId?: string;
+    instanceName?: string; // Nome da instância para exibição no card (apenas para whatsappTrigger)
     webhookUrl?: string;
     workflowId?: string;
     spreadsheetId?: string;
@@ -693,6 +725,7 @@ export interface WorkflowNode {
     apiKey?: string;
     model?: string;
     prompt?: string;
+    responseDelay?: number; // Delay em milissegundos (usado em openai para resposta e em response para envio)
     conditions?: Array<{ id: string; text: string; outputId: string }>;
     delay?: number;
     delayUnit?: 'seconds' | 'minutes' | 'hours';
@@ -746,42 +779,42 @@ export interface WorkflowContact {
   enteredAt: string;
 }
 
-// API de Workflows
+// API de Workflows (usa MindClerky microserviço)
 export const workflowAPI = {
   getAll: async (): Promise<{ status: string; workflows: Workflow[] }> => {
-    return request<{ status: string; workflows: Workflow[] }>('/workflows');
+    return requestMindClerky<{ status: string; workflows: Workflow[] }>('/workflows');
   },
 
   getById: async (id: string): Promise<{ status: string; workflow: Workflow }> => {
-    return request<{ status: string; workflow: Workflow }>(`/workflows/${id}`);
+    return requestMindClerky<{ status: string; workflow: Workflow }>(`/workflows/${id}`);
   },
 
   create: async (data: CreateWorkflowData): Promise<{ status: string; message: string; workflow: Workflow }> => {
-    return request<{ status: string; message: string; workflow: Workflow }>('/workflows', {
+    return requestMindClerky<{ status: string; message: string; workflow: Workflow }>('/workflows', {
       method: 'POST',
       body: JSON.stringify(data),
     });
   },
 
   update: async (id: string, data: UpdateWorkflowData): Promise<{ status: string; message: string; workflow: Workflow }> => {
-    return request<{ status: string; message: string; workflow: Workflow }>(`/workflows/${id}`, {
+    return requestMindClerky<{ status: string; message: string; workflow: Workflow }>(`/workflows/${id}`, {
       method: 'PUT',
       body: JSON.stringify(data),
     });
   },
 
   delete: async (id: string): Promise<{ status: string; message: string }> => {
-    return request<{ status: string; message: string }>(`/workflows/${id}`, {
+    return requestMindClerky<{ status: string; message: string }>(`/workflows/${id}`, {
       method: 'DELETE',
     });
   },
 
   getContacts: async (id: string): Promise<{ status: string; contacts: WorkflowContact[] }> => {
-    return request<{ status: string; contacts: WorkflowContact[] }>(`/workflows/${id}/contacts`);
+    return requestMindClerky<{ status: string; contacts: WorkflowContact[] }>(`/workflows/${id}/contacts`);
   },
 
   clearContacts: async (id: string): Promise<{ status: string; message: string; deletedCount: number }> => {
-    return request<{ status: string; message: string; deletedCount: number }>(`/workflows/${id}/contacts/clear`, {
+    return requestMindClerky<{ status: string; message: string; deletedCount: number }>(`/workflows/${id}/contacts/clear`, {
       method: 'POST',
     });
   },
