@@ -326,7 +326,6 @@ const Dispatches: React.FC = () => {
                   const formatSchedule = () => {
                     if (!dispatch.schedule) return null;
                     if (dispatch.schedule.startDate) {
-<<<<<<< HEAD
                       // Formatar data diretamente sem usar new Date() para evitar problemas de timezone
                       // startDate vem no formato "YYYY-MM-DD"
                       const [year, month, day] = dispatch.schedule.startDate.split('-');
