@@ -7,9 +7,10 @@ import { useSocket, DispatchUpdateData } from '../hooks/useSocket';
 import { dispatchAPI, instanceAPI, Template, Dispatch, CreateTemplateData, CreateDispatchData, Instance } from '../services/api';
 import TemplateBuilder from '../components/Dispatches/TemplateBuilder';
 import DispatchCreator from '../components/Dispatches/DispatchCreator';
+import { formatScheduleDateTime } from '../utils/dateFormatters';
 
 const Dispatches: React.FC = () => {
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   const { token } = useAuth();
   const [activeTab, setActiveTab] = useState<'templates' | 'dispatches'>('templates');
   const [templates, setTemplates] = useState<Template[]>([]);
@@ -325,6 +326,7 @@ const Dispatches: React.FC = () => {
                   const formatSchedule = () => {
                     if (!dispatch.schedule) return null;
                     if (dispatch.schedule.startDate) {
+<<<<<<< HEAD
                       // Formatar data diretamente sem usar new Date() para evitar problemas de timezone
                       // startDate vem no formato "YYYY-MM-DD"
                       const [year, month, day] = dispatch.schedule.startDate.split('-');
