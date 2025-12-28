@@ -16,6 +16,8 @@ import {
   DragOverlay,
   DragStartEvent,
   PointerSensor,
+  TouchSensor,
+  MouseSensor,
   useSensor,
   useSensors,
   closestCorners,
@@ -1077,10 +1079,25 @@ const CRM: React.FC = () => {
   const [activeId, setActiveId] = useState<string | null>(null);
   const [draggedOverColumnId, setDraggedOverColumnId] = useState<string | null>(null);
 
+  // Configuração otimizada de sensors para melhor fluidez em tablet
+  // TouchSensor para tablets com delay reduzido
+  // MouseSensor para desktop com delay mínimo
+  // PointerSensor como fallback
   const sensors = useSensors(
+    useSensor(TouchSensor, {
+      activationConstraint: {
+        delay: 100, // Delay reduzido para tablets (padrão é 250ms)
+        tolerance: 5, // Tolerância menor para melhor responsividade
+      },
+    }),
+    useSensor(MouseSensor, {
+      activationConstraint: {
+        distance: 5, // Distância menor para melhor responsividade em desktop
+      },
+    }),
     useSensor(PointerSensor, {
       activationConstraint: {
-        distance: 8,
+        distance: 8, // Fallback para outros dispositivos
       },
     })
   );

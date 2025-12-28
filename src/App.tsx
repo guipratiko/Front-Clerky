@@ -4,6 +4,7 @@ import { LanguageProvider } from './contexts/LanguageContext';
 import { ThemeProvider } from './contexts/ThemeContext';
 import { AuthProvider } from './contexts/AuthContext';
 import ProtectedRoute from './components/Auth/ProtectedRoute';
+import MobileRestrictedRoute from './components/Auth/MobileRestrictedRoute';
 import Login from './components/Login/Login';
 import SignUp from './components/SignUp/SignUp';
 import Home from './pages/Home';
@@ -53,7 +54,9 @@ function AppContent() {
         path="/crm"
         element={
           <ProtectedRoute>
-            <CRM />
+            <MobileRestrictedRoute>
+              <CRM />
+            </MobileRestrictedRoute>
           </ProtectedRoute>
         }
       />
@@ -61,7 +64,9 @@ function AppContent() {
         path="/mindclerky"
         element={
           <ProtectedRoute>
-            <MindClerky />
+            <MobileRestrictedRoute>
+              <MindClerky />
+            </MobileRestrictedRoute>
           </ProtectedRoute>
         }
       />

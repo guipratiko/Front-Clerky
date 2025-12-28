@@ -372,19 +372,19 @@ const Settings: React.FC = () => {
 
   return (
     <AppLayout>
-      <div className="animate-fadeIn max-w-4xl mx-auto">
+      <div className="animate-fadeIn max-w-4xl mx-auto p-4 md:p-6">
         {/* Mensagem de sucesso */}
         {successMessage && (
-          <div className="mb-6 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 text-green-700 dark:text-green-400 px-4 py-3 rounded-lg animate-slideIn">
+          <div className="mb-4 md:mb-6 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 text-green-700 dark:text-green-400 px-4 py-3 rounded-lg animate-slideIn text-sm md:text-base">
             {successMessage}
           </div>
         )}
 
-        {/* Tabs */}
-        <div className="flex gap-4 mb-6 border-b border-gray-200 dark:border-gray-700">
+        {/* Tabs - Scroll horizontal em mobile */}
+        <div className="flex gap-2 md:gap-4 mb-4 md:mb-6 border-b border-gray-200 dark:border-gray-700 overflow-x-auto scrollbar-hide -mx-4 px-4 md:mx-0 md:px-0">
           <button
             onClick={() => setActiveTab('profile')}
-            className={`px-4 py-2 font-medium transition-smooth ${
+            className={`px-3 md:px-4 py-2.5 md:py-2 font-medium transition-smooth whitespace-nowrap text-sm md:text-base touch-manipulation ${
               activeTab === 'profile'
                 ? 'text-clerky-backendButton border-b-2 border-clerky-backendButton'
                 : 'text-gray-500 dark:text-gray-400 hover:text-clerky-backendText dark:hover:text-gray-200'
@@ -394,7 +394,7 @@ const Settings: React.FC = () => {
           </button>
           <button
             onClick={() => setActiveTab('password')}
-            className={`px-4 py-2 font-medium transition-smooth ${
+            className={`px-3 md:px-4 py-2.5 md:py-2 font-medium transition-smooth whitespace-nowrap text-sm md:text-base touch-manipulation ${
               activeTab === 'password'
                 ? 'text-clerky-backendButton border-b-2 border-clerky-backendButton'
                 : 'text-gray-500 dark:text-gray-400 hover:text-clerky-backendText dark:hover:text-gray-200'
@@ -404,7 +404,7 @@ const Settings: React.FC = () => {
           </button>
           <button
             onClick={() => setActiveTab('kanban')}
-            className={`px-4 py-2 font-medium transition-smooth ${
+            className={`px-3 md:px-4 py-2.5 md:py-2 font-medium transition-smooth whitespace-nowrap text-sm md:text-base touch-manipulation ${
               activeTab === 'kanban'
                 ? 'text-clerky-backendButton border-b-2 border-clerky-backendButton'
                 : 'text-gray-500 dark:text-gray-400 hover:text-clerky-backendText dark:hover:text-gray-200'
@@ -414,7 +414,7 @@ const Settings: React.FC = () => {
           </button>
           <button
             onClick={() => setActiveTab('labels')}
-            className={`px-4 py-2 font-medium transition-smooth ${
+            className={`px-3 md:px-4 py-2.5 md:py-2 font-medium transition-smooth whitespace-nowrap text-sm md:text-base touch-manipulation ${
               activeTab === 'labels'
                 ? 'text-clerky-backendButton border-b-2 border-clerky-backendButton'
                 : 'text-gray-500 dark:text-gray-400 hover:text-clerky-backendText dark:hover:text-gray-200'
@@ -426,8 +426,8 @@ const Settings: React.FC = () => {
 
         {/* Formulário de Perfil */}
         {activeTab === 'profile' && (
-          <Card padding="lg" shadow="lg">
-            <form onSubmit={handleProfileSubmit} className="space-y-6">
+          <Card padding="md" shadow="lg" className="p-4 md:p-8">
+            <form onSubmit={handleProfileSubmit} className="space-y-4 md:space-y-6">
               {profileErrors.general && (
                 <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm">
                   {profileErrors.general}
@@ -502,7 +502,7 @@ const Settings: React.FC = () => {
                   name="timezone"
                   value={profileData.timezone}
                   onChange={(e) => setProfileData({ ...profileData, timezone: e.target.value })}
-                  className="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg dark:bg-gray-800 dark:text-gray-200"
+                  className="w-full p-3 md:p-3 border border-gray-300 dark:border-gray-600 rounded-lg dark:bg-gray-800 dark:text-gray-200 text-base md:text-sm touch-manipulation"
                 >
                   <option value="America/Sao_Paulo">Brasil (São Paulo) - GMT-3</option>
                   <option value="America/Manaus">Brasil (Manaus) - GMT-4</option>
@@ -536,7 +536,7 @@ const Settings: React.FC = () => {
                 variant="primary"
                 size="lg"
                 isLoading={isLoadingProfile}
-                className="w-full"
+                className="w-full py-3 md:py-2.5 touch-manipulation"
               >
                 {isLoadingProfile ? t('settings.saving') : t('settings.saveProfile')}
               </Button>
@@ -546,15 +546,15 @@ const Settings: React.FC = () => {
 
         {/* Formulário de Senha */}
         {activeTab === 'password' && (
-          <Card padding="lg" shadow="lg">
-            <form onSubmit={handlePasswordSubmit} className="space-y-6">
+          <Card padding="md" shadow="lg" className="p-4 md:p-8">
+            <form onSubmit={handlePasswordSubmit} className="space-y-4 md:space-y-6">
               {passwordErrors.general && (
                 <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm">
                   {passwordErrors.general}
                 </div>
               )}
 
-              <h2 className="text-xl font-semibold text-clerky-backendText dark:text-gray-200 mb-4">
+              <h2 className="text-lg md:text-xl font-semibold text-clerky-backendText dark:text-gray-200 mb-3 md:mb-4">
                 {t('settings.changePassword')}
               </h2>
 
@@ -599,7 +599,7 @@ const Settings: React.FC = () => {
                 variant="primary"
                 size="lg"
                 isLoading={isLoadingPassword}
-                className="w-full"
+                className="w-full py-3 md:py-2.5 touch-manipulation"
               >
                 {isLoadingPassword ? t('settings.updating') : t('settings.updatePassword')}
               </Button>
@@ -609,13 +609,13 @@ const Settings: React.FC = () => {
 
         {/* Formulário de Colunas do Kanban */}
         {activeTab === 'kanban' && (
-          <Card padding="lg" shadow="lg">
-            <div className="space-y-6">
+          <Card padding="md" shadow="lg" className="p-4 md:p-8">
+            <div className="space-y-4 md:space-y-6">
               <div>
-                <h2 className="text-xl font-semibold text-clerky-backendText dark:text-gray-200 mb-2">
+                <h2 className="text-lg md:text-xl font-semibold text-clerky-backendText dark:text-gray-200 mb-2">
                   Gerenciar Colunas do Kanban
                 </h2>
-                <p className="text-sm text-gray-600 dark:text-gray-400 mb-6">
+                <p className="text-sm text-gray-600 dark:text-gray-400 mb-4 md:mb-6">
                   Edite os nomes das colunas do seu Kanban CRM. As alterações serão aplicadas imediatamente.
                 </p>
               </div>
@@ -626,14 +626,14 @@ const Settings: React.FC = () => {
                   <p className="text-gray-600 dark:text-gray-300">Carregando colunas...</p>
                 </div>
               ) : (
-                <div className="space-y-4">
+                <div className="space-y-3 md:space-y-4">
                   {columns.map((column) => (
                     <div
                       key={column.id}
-                      className="flex items-center gap-4 p-4 bg-gray-50 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700"
+                      className="flex flex-col md:flex-row md:items-center gap-3 md:gap-4 p-3 md:p-4 bg-gray-50 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700"
                     >
-                      <div className="flex-1">
-                        <div className="flex items-center gap-2 mb-2">
+                      <div className="flex-1 min-w-0">
+                        <div className="flex flex-wrap items-center gap-2 mb-2">
                           <label className="block text-sm font-medium text-clerky-backendText dark:text-gray-200">
                             Coluna {column.order + 1}
                           </label>
@@ -661,7 +661,7 @@ const Settings: React.FC = () => {
                         onClick={() => handleColumnNameSubmit(column.id)}
                         variant="primary"
                         size="md"
-                        className="mt-6"
+                        className="w-full md:w-auto mt-0 md:mt-6 py-2.5 md:py-2 touch-manipulation"
                       >
                         Salvar
                       </Button>
@@ -675,13 +675,13 @@ const Settings: React.FC = () => {
 
         {/* Formulário de Labels */}
         {activeTab === 'labels' && (
-          <Card padding="lg" shadow="lg">
-            <div className="space-y-6">
+          <Card padding="md" shadow="lg" className="p-4 md:p-8">
+            <div className="space-y-4 md:space-y-6">
               <div>
-                <h2 className="text-xl font-semibold text-clerky-backendText dark:text-gray-200 mb-2">
+                <h2 className="text-lg md:text-xl font-semibold text-clerky-backendText dark:text-gray-200 mb-2">
                   Gerenciar Etiquetas
                 </h2>
-                <p className="text-sm text-gray-600 dark:text-gray-400 mb-6">
+                <p className="text-sm text-gray-600 dark:text-gray-400 mb-4 md:mb-6">
                   Configure até 5 etiquetas com nomes e cores personalizadas para categorizar seus contatos.
                 </p>
               </div>
@@ -692,14 +692,14 @@ const Settings: React.FC = () => {
                   <p className="text-gray-600 dark:text-gray-300">Carregando etiquetas...</p>
                 </div>
               ) : (
-                <div className="space-y-4">
+                <div className="space-y-3 md:space-y-4">
                   {labels.map((label) => (
                     <div
                       key={label.id}
-                      className="flex items-center gap-4 p-4 bg-gray-50 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700"
+                      className="flex flex-col md:flex-row md:items-start gap-3 md:gap-4 p-3 md:p-4 bg-gray-50 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700"
                     >
-                      <div className="flex-1 space-y-3">
-                        <div className="flex items-center gap-2">
+                      <div className="flex-1 space-y-3 min-w-0">
+                        <div className="flex flex-wrap items-center gap-2">
                           <label className="block text-sm font-medium text-clerky-backendText dark:text-gray-200">
                             Etiqueta {label.order + 1}
                           </label>
@@ -707,7 +707,7 @@ const Settings: React.FC = () => {
                             ID: {label.shortId}
                           </span>
                           <div
-                            className="w-6 h-6 rounded border-2 border-gray-300 dark:border-gray-600"
+                            className="w-6 h-6 rounded border-2 border-gray-300 dark:border-gray-600 flex-shrink-0"
                             style={{ backgroundColor: labelColors[label.id] || label.color }}
                           ></div>
                         </div>
@@ -726,33 +726,35 @@ const Settings: React.FC = () => {
                             }
                           }}
                         />
-                        <div className="flex items-center gap-2">
-                          <label className="block text-sm font-medium text-clerky-backendText dark:text-gray-200">
+                        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2">
+                          <label className="block text-sm font-medium text-clerky-backendText dark:text-gray-200 whitespace-nowrap">
                             Cor:
                           </label>
-                          <input
-                            type="color"
-                            value={labelColors[label.id] || label.color}
-                            onChange={(e) => handleLabelColorChange(label.id, e.target.value)}
-                            className="w-12 h-8 rounded border border-gray-300 dark:border-gray-600 cursor-pointer"
-                          />
-                          <Input
-                            id={`label-color-${label.id}`}
-                            type="text"
-                            value={labelColors[label.id] || label.color}
-                            onChange={(e) => handleLabelColorChange(label.id, e.target.value)}
-                            placeholder="#FF5733"
-                            className="flex-1"
-                            maxLength={7}
-                            pattern="^#[0-9A-Fa-f]{6}$"
-                          />
+                          <div className="flex items-center gap-2 w-full sm:w-auto">
+                            <input
+                              type="color"
+                              value={labelColors[label.id] || label.color}
+                              onChange={(e) => handleLabelColorChange(label.id, e.target.value)}
+                              className="w-12 h-10 md:h-8 rounded border border-gray-300 dark:border-gray-600 cursor-pointer touch-manipulation flex-shrink-0"
+                            />
+                            <Input
+                              id={`label-color-${label.id}`}
+                              type="text"
+                              value={labelColors[label.id] || label.color}
+                              onChange={(e) => handleLabelColorChange(label.id, e.target.value)}
+                              placeholder="#FF5733"
+                              className="flex-1 min-w-0"
+                              maxLength={7}
+                              pattern="^#[0-9A-Fa-f]{6}$"
+                            />
+                          </div>
                         </div>
                       </div>
                       <Button
                         onClick={() => handleLabelSubmit(label.id)}
                         variant="primary"
                         size="md"
-                        className="mt-6"
+                        className="w-full md:w-auto mt-0 md:mt-6 py-2.5 md:py-2 touch-manipulation"
                       >
                         Salvar
                       </Button>

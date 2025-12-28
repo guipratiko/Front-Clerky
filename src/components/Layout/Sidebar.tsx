@@ -3,6 +3,7 @@ import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { useLanguage } from '../../contexts/LanguageContext';
 import { useTheme } from '../../contexts/ThemeContext';
+import { useIsMobile } from '../../hooks/useIsMobile';
 import { LanguageToggle, ThemeToggle } from '../UI';
 
 interface SidebarProps {
@@ -17,12 +18,20 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose, isCollapsed = false,
   const { t, language, setLanguage } = useLanguage();
   const { theme, toggleTheme } = useTheme();
   const location = useLocation();
+  const isMobile = useIsMobile();
   
   const handleLanguageToggle = () => {
     setLanguage(language === 'pt' ? 'en' : 'pt');
   };
 
-  const menuItems = [
+  interface MenuItem {
+    path: string;
+    key: string;
+    icon: React.ReactNode;
+    isMobileRestricted?: boolean;
+  }
+
+  const menuItems: MenuItem[] = [
     { 
       path: '/inicio', 
       key: 'menu.home',
@@ -53,6 +62,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose, isCollapsed = false,
     { 
       path: '/crm', 
       key: 'menu.crm',
+      isMobileRestricted: true,
       icon: (
         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
@@ -62,6 +72,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose, isCollapsed = false,
     { 
       path: '/mindclerky', 
       key: 'menu.mindClerky',
+      isMobileRestricted: true,
       icon: (
         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
@@ -153,28 +164,67 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose, isCollapsed = false,
 
         {/* Menu Items */}
         <nav className={`flex-1 ${isCollapsed ? 'px-2' : 'px-4'} py-6 space-y-2 overflow-y-auto`}>
-          {menuItems.map((item) => (
-            <Link
-              key={item.path}
-              to={item.path}
-              onClick={onClose}
-              className={`
-                flex items-center ${isCollapsed ? 'justify-center' : ''} gap-3 ${isCollapsed ? 'px-2' : 'px-4'} py-3 rounded-lg
-                transition-smooth
-                ${
-                  isActive(item.path)
-                    ? 'bg-clerky-backendButton text-white shadow-md'
-                    : 'text-clerky-backendText dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700'
-                }
-              `}
-              title={isCollapsed ? t(item.key) : ''}
-            >
-              <span className="flex-shrink-0">{item.icon}</span>
-              {!isCollapsed && (
-                <span className="font-medium flex-1 text-left">{t(item.key)}</span>
-              )}
-            </Link>
-          ))}
+          {menuItems.map((item) => {
+            const isRestricted = isMobile && item.isMobileRestricted;
+            const itemContent = (
+              <div
+                className={`
+                  flex items-center ${isCollapsed ? 'justify-center' : ''} gap-3 ${isCollapsed ? 'px-2' : 'px-4'} py-3 rounded-lg
+                  transition-smooth relative
+                  ${
+                    isActive(item.path) && !isRestricted
+                      ? 'bg-clerky-backendButton text-white shadow-md'
+                      : isRestricted
+                      ? 'text-gray-400 dark:text-gray-600 cursor-not-allowed opacity-60'
+                      : 'text-clerky-backendText dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700'
+                  }
+                `}
+                title={isCollapsed ? t(item.key) : isRestricted ? 'Não disponível em dispositivos móveis' : ''}
+              >
+                <span className="flex-shrink-0">{item.icon}</span>
+                {!isCollapsed && (
+                  <>
+                    <span className="font-medium flex-1 text-left">{t(item.key)}</span>
+                    {isRestricted && (
+                      <span className="flex-shrink-0" title="Não disponível em mobile">
+                        <svg
+                          className="w-4 h-4 text-gray-400 dark:text-gray-600"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z"
+                          />
+                        </svg>
+                      </span>
+                    )}
+                  </>
+                )}
+              </div>
+            );
+
+            if (isRestricted) {
+              return (
+                <div key={item.path} onClick={(e) => e.preventDefault()}>
+                  {itemContent}
+                </div>
+              );
+            }
+
+            return (
+              <Link
+                key={item.path}
+                to={item.path}
+                onClick={onClose}
+              >
+                {itemContent}
+              </Link>
+            );
+          })}
         </nav>
 
         {/* Footer do Sidebar */}

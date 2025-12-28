@@ -1035,26 +1035,46 @@ const GroupManager: React.FC = () => {
 
   return (
     <AppLayout>
-      <div className="p-6 space-y-6">
-        <div className="flex items-center justify-between">
-          <h1 className="text-2xl font-bold text-clerky-backendText dark:text-gray-200">
+      <div className="p-4 md:p-6 space-y-4 md:space-y-6">
+        {/* Header - Responsivo */}
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+          <h1 className="text-xl md:text-2xl font-bold text-clerky-backendText dark:text-gray-200">
             {t('groupManager.title')}
           </h1>
-          <div className="flex gap-2">
-            <Button onClick={handleOpenCreateModal} disabled={!selectedInstance}>
+          <div className="flex flex-col sm:flex-row gap-2 w-full md:w-auto">
+            <Button 
+              onClick={handleOpenCreateModal} 
+              disabled={!selectedInstance}
+              className="w-full sm:w-auto"
+            >
               {t('groupManager.createGroup')}
             </Button>
             {groups.length > 0 && (
               <>
-                <Button variant="outline" onClick={() => setShowMentionAllGroupsModal(true)} disabled={!selectedInstance}>
+                <Button 
+                  variant="outline" 
+                  onClick={() => setShowMentionAllGroupsModal(true)} 
+                  disabled={!selectedInstance}
+                  className="w-full sm:w-auto text-sm"
+                >
                   {t('groupManager.mentionAllGroups')}
                 </Button>
-                <Button variant="outline" onClick={() => setShowBulkEditModal(true)} disabled={!selectedInstance}>
+                <Button 
+                  variant="outline" 
+                  onClick={() => setShowBulkEditModal(true)} 
+                  disabled={!selectedInstance}
+                  className="w-full sm:w-auto text-sm"
+                >
                   {t('groupManager.bulkEdit')}
                 </Button>
               </>
             )}
-            <Button variant="outline" onClick={refreshGroups} disabled={isRefreshing || !selectedInstance}>
+            <Button 
+              variant="outline" 
+              onClick={refreshGroups} 
+              disabled={isRefreshing || !selectedInstance}
+              className="w-full sm:w-auto text-sm"
+            >
               {isRefreshing ? t('groupManager.refreshing') : t('groupManager.refresh')}
             </Button>
           </div>
@@ -1082,7 +1102,7 @@ const GroupManager: React.FC = () => {
             <select
               value={selectedInstance}
               onChange={(e) => setSelectedInstance(e.target.value)}
-              className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-clerky-backendButton focus:border-transparent bg-white dark:bg-gray-700 text-clerky-backendText dark:text-gray-200"
+              className="w-full px-4 py-3 md:py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-clerky-backendButton focus:border-transparent bg-white dark:bg-gray-700 text-clerky-backendText dark:text-gray-200 text-base md:text-sm touch-manipulation"
             >
               <option value="">{t('groupManager.selectInstancePlaceholder')}</option>
               {instances.map((instance) => (
@@ -1114,7 +1134,7 @@ const GroupManager: React.FC = () => {
             </p>
           </Card>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-6">
             {groups.map((group) => (
               <Card key={group.id} padding="md" className="flex flex-col h-full">
                 <div className="flex-1">
@@ -1124,38 +1144,38 @@ const GroupManager: React.FC = () => {
                       <img
                         src={group.pictureUrl}
                         alt={group.name || 'Grupo'}
-                        className="w-20 h-20 rounded-full object-cover border-2 border-gray-200 dark:border-gray-700"
+                        className="w-16 h-16 md:w-20 md:h-20 rounded-full object-cover border-2 border-gray-200 dark:border-gray-700"
                       />
                     ) : (
-                      <div className="w-20 h-20 rounded-full bg-gradient-to-br from-clerky-backendButton to-clerky-backendButtonHover flex items-center justify-center text-white text-2xl font-bold">
+                      <div className="w-16 h-16 md:w-20 md:h-20 rounded-full bg-gradient-to-br from-clerky-backendButton to-clerky-backendButtonHover flex items-center justify-center text-white text-xl md:text-2xl font-bold">
                         {(group.name || group.id).charAt(0).toUpperCase()}
                       </div>
                     )}
                   </div>
                   
                   {/* Nome do Grupo */}
-                  <h3 className="text-lg font-semibold text-clerky-backendText dark:text-gray-200 mb-2 text-center">
+                  <h3 className="text-base md:text-lg font-semibold text-clerky-backendText dark:text-gray-200 mb-2 text-center line-clamp-2">
                     {group.name || group.id}
                   </h3>
                   
                   {/* Descrição */}
                   {group.description && (
-                    <p className="text-sm text-gray-600 dark:text-gray-400 mb-3 line-clamp-3 text-center min-h-[3rem]">
+                    <p className="text-xs md:text-sm text-gray-600 dark:text-gray-400 mb-3 line-clamp-2 md:line-clamp-3 text-center min-h-[2.5rem] md:min-h-[3rem]">
                       {group.description}
                     </p>
                   )}
                   
                   {/* Informações */}
-                  <div className="flex items-center justify-center gap-4 text-xs text-gray-500 dark:text-gray-500 mb-3">
+                  <div className="flex items-center justify-center gap-3 md:gap-4 text-xs text-gray-500 dark:text-gray-500 mb-3">
                     <span className="flex items-center gap-1">
-                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <svg className="w-3.5 h-3.5 md:w-4 md:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
                       </svg>
                       {group.participants?.length || 0}
                     </span>
                     {group.creation && (
                       <span className="flex items-center gap-1">
-                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <svg className="w-3.5 h-3.5 md:w-4 md:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                         </svg>
                         {new Date(group.creation).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' })}
@@ -1164,21 +1184,42 @@ const GroupManager: React.FC = () => {
                   </div>
                 </div>
                 
-                {/* Botões */}
+                {/* Botões - Otimizado para mobile */}
                 <div className="flex flex-col gap-2 mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
                   <div className="grid grid-cols-2 gap-2">
-                    <Button variant="outline" size="sm" onClick={() => handleViewGroupDetails(group)} className="text-xs">
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      onClick={() => handleViewGroupDetails(group)} 
+                      className="text-xs py-2 md:py-1.5 touch-manipulation"
+                    >
                       {t('groupManager.viewDetails')}
                     </Button>
-                    <Button variant="outline" size="sm" onClick={() => handleOpenEditModal(group)} className="text-xs">
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      onClick={() => handleOpenEditModal(group)} 
+                      className="text-xs py-2 md:py-1.5 touch-manipulation"
+                    >
                       {t('groupManager.edit')}
                     </Button>
                   </div>
                   <div className="grid grid-cols-2 gap-2">
-                    <Button variant="outline" size="sm" onClick={() => handleGetInviteCode(group)} disabled={isLoadingInvite} className="text-xs">
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      onClick={() => handleGetInviteCode(group)} 
+                      disabled={isLoadingInvite} 
+                      className="text-xs py-2 md:py-1.5 touch-manipulation"
+                    >
                       {t('groupManager.inviteCode')}
                     </Button>
-                    <Button variant="outline" size="sm" onClick={() => handleMentionEveryone(group)} className="text-xs">
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      onClick={() => handleMentionEveryone(group)} 
+                      className="text-xs py-2 md:py-1.5 touch-manipulation"
+                    >
                       {t('groupManager.mentionEveryone')}
                     </Button>
                   </div>
@@ -1186,7 +1227,7 @@ const GroupManager: React.FC = () => {
                     variant="outline" 
                     size="sm" 
                     onClick={() => handleLeaveGroup(group.id)}
-                    className="border-red-500 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 hover:border-red-600 dark:hover:border-red-500 text-xs"
+                    className="border-red-500 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 hover:border-red-600 dark:hover:border-red-500 text-xs py-2 md:py-1.5 touch-manipulation"
                   >
                     {t('groupManager.leave')}
                   </Button>
@@ -1250,7 +1291,7 @@ const GroupManager: React.FC = () => {
                       value={groupDescription}
                       onChange={(e) => setGroupDescription(e.target.value)}
                       placeholder={t('groupManager.descriptionPlaceholder')}
-                      className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-clerky-backendButton focus:border-transparent bg-white dark:bg-gray-700 text-clerky-backendText dark:text-gray-200 min-h-[100px]"
+                      className="w-full px-4 py-3 md:py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-clerky-backendButton focus:border-transparent bg-white dark:bg-gray-700 text-clerky-backendText dark:text-gray-200 min-h-[120px] md:min-h-[100px] text-base md:text-sm"
                     />
                   </div>
                   <div>
@@ -1304,7 +1345,7 @@ const GroupManager: React.FC = () => {
                       value={participantsText}
                       onChange={(e) => setParticipantsText(e.target.value)}
                       placeholder={t('groupManager.participants.textPlaceholder')}
-                      className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-clerky-backendButton focus:border-transparent bg-white dark:bg-gray-700 text-clerky-backendText dark:text-gray-200 min-h-[100px] mb-2"
+                      className="w-full px-4 py-3 md:py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-clerky-backendButton focus:border-transparent bg-white dark:bg-gray-700 text-clerky-backendText dark:text-gray-200 min-h-[120px] md:min-h-[100px] mb-2 text-base md:text-sm"
                     />
                     <Button size="sm" onClick={handleProcessTextParticipants}>
                       {t('groupManager.participants.add')}
@@ -1344,23 +1385,23 @@ const GroupManager: React.FC = () => {
                         </Button>
                       </div>
                     </div>
-                    <div className="max-h-64 overflow-y-auto space-y-2 mb-2">
+                    <div className="max-h-48 md:max-h-64 overflow-y-auto space-y-2 mb-2">
                       {crmContacts.map((contact) => (
                         <div
                           key={contact.id}
-                          className="flex items-center gap-2 p-2 bg-gray-50 dark:bg-gray-800 rounded"
+                          className="flex items-center gap-2 p-2.5 md:p-2 bg-gray-50 dark:bg-gray-800 rounded touch-manipulation"
                         >
                           <input
                             type="checkbox"
                             checked={selectedCrmContacts.has(contact.id)}
                             onChange={() => handleToggleCrmContact(contact.id)}
-                            className="w-4 h-4 text-clerky-backendButton border-gray-300 rounded focus:ring-clerky-backendButton"
+                            className="w-5 h-5 md:w-4 md:h-4 text-clerky-backendButton border-gray-300 rounded focus:ring-clerky-backendButton touch-manipulation"
                           />
-                          <div className="flex-1">
-                            <p className="text-sm font-medium text-clerky-backendText dark:text-gray-200">
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm md:text-sm font-medium text-clerky-backendText dark:text-gray-200 truncate">
                               {contact.name}
                             </p>
-                            <p className="text-xs text-gray-500 dark:text-gray-400">{contact.phone}</p>
+                            <p className="text-xs text-gray-500 dark:text-gray-400 truncate">{contact.phone}</p>
                           </div>
                         </div>
                       ))}
@@ -1388,23 +1429,24 @@ const GroupManager: React.FC = () => {
                         </p>
                       </div>
                     )}
-                    <div className="max-h-64 overflow-y-auto space-y-2">
+                    <div className="max-h-48 md:max-h-64 overflow-y-auto space-y-2">
                       {participantsList.map((participant, index) => (
                         <div
                           key={index}
-                          className="flex items-center justify-between p-2 bg-gray-50 dark:bg-gray-800 rounded"
+                          className="flex items-center justify-between p-2.5 md:p-2 bg-gray-50 dark:bg-gray-800 rounded"
                         >
-                          <div>
-                            <p className="text-sm font-medium text-clerky-backendText dark:text-gray-200">
+                          <div className="flex-1 min-w-0 pr-2">
+                            <p className="text-sm font-medium text-clerky-backendText dark:text-gray-200 truncate">
                               {participant.name || participant.phone}
                             </p>
                             {participant.name && (
-                              <p className="text-xs text-gray-500 dark:text-gray-400">{participant.phone}</p>
+                              <p className="text-xs text-gray-500 dark:text-gray-400 truncate">{participant.phone}</p>
                             )}
                           </div>
                           <button
                             onClick={() => handleRemoveParticipant(participant.phone)}
-                            className="text-red-600 dark:text-red-400 hover:text-red-800 dark:hover:text-red-300"
+                            className="text-red-600 dark:text-red-400 hover:text-red-800 dark:hover:text-red-300 text-lg md:text-base w-8 h-8 md:w-6 md:h-6 flex items-center justify-center touch-manipulation"
+                            aria-label="Remover"
                           >
                             ✕
                           </button>
@@ -1423,11 +1465,19 @@ const GroupManager: React.FC = () => {
             </div>
 
             {/* Botões de Ação */}
-            <div className="flex justify-end gap-2 pt-4 border-t border-gray-200 dark:border-gray-700">
-              <Button variant="outline" onClick={handleCloseCreateModal}>
+            <div className="flex flex-col sm:flex-row justify-end gap-2 pt-4 border-t border-gray-200 dark:border-gray-700">
+              <Button 
+                variant="outline" 
+                onClick={handleCloseCreateModal}
+                className="w-full sm:w-auto py-2.5 md:py-2 touch-manipulation"
+              >
                 {t('groupManager.cancel')}
               </Button>
-              <Button onClick={handleCreateGroup} disabled={isCreating || !groupName.trim() || participantsList.length === 0}>
+              <Button 
+                onClick={handleCreateGroup} 
+                disabled={isCreating || !groupName.trim() || participantsList.length === 0}
+                className="w-full sm:w-auto py-2.5 md:py-2 touch-manipulation"
+              >
                 {isCreating ? t('groupManager.creating') : t('groupManager.create')}
               </Button>
             </div>
@@ -1504,7 +1554,7 @@ const GroupManager: React.FC = () => {
                         value={groupDescription}
                         onChange={(e) => setGroupDescription(e.target.value)}
                         placeholder={t('groupManager.descriptionPlaceholder')}
-                        className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-clerky-backendButton focus:border-transparent bg-white dark:bg-gray-700 text-clerky-backendText dark:text-gray-200 min-h-[100px]"
+                        className="w-full px-4 py-3 md:py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-clerky-backendButton focus:border-transparent bg-white dark:bg-gray-700 text-clerky-backendText dark:text-gray-200 min-h-[120px] md:min-h-[100px] text-base md:text-sm"
                       />
                       <Button size="sm" onClick={handleUpdateDescription} disabled={isUpdating} className="mt-2">
                         {isUpdating ? t('groupManager.updating') : t('groupManager.updateDescription')}
@@ -1563,7 +1613,7 @@ const GroupManager: React.FC = () => {
                         value={editParticipantsText}
                         onChange={(e) => setEditParticipantsText(e.target.value)}
                         placeholder={t('groupManager.participants.textPlaceholder')}
-                        className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-clerky-backendButton focus:border-transparent bg-white dark:bg-gray-700 text-clerky-backendText dark:text-gray-200 min-h-[100px] mb-2"
+                        className="w-full px-4 py-3 md:py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-clerky-backendButton focus:border-transparent bg-white dark:bg-gray-700 text-clerky-backendText dark:text-gray-200 min-h-[120px] md:min-h-[100px] mb-2 text-base md:text-sm"
                       />
                       <Button size="sm" onClick={handleEditProcessTextParticipants}>
                         {t('groupManager.participants.add')}
@@ -1603,23 +1653,23 @@ const GroupManager: React.FC = () => {
                           </Button>
                         </div>
                       </div>
-                      <div className="max-h-64 overflow-y-auto space-y-2 mb-2">
+                      <div className="max-h-48 md:max-h-64 overflow-y-auto space-y-2 mb-2">
                         {crmContacts.map((contact) => (
                           <div
                             key={contact.id}
-                            className="flex items-center gap-2 p-2 bg-gray-50 dark:bg-gray-800 rounded"
+                            className="flex items-center gap-2 p-2.5 md:p-2 bg-gray-50 dark:bg-gray-800 rounded touch-manipulation"
                           >
                             <input
                               type="checkbox"
                               checked={editSelectedCrmContacts.has(contact.id)}
                               onChange={() => handleEditToggleCrmContact(contact.id)}
-                              className="w-4 h-4 text-clerky-backendButton border-gray-300 rounded focus:ring-clerky-backendButton"
+                              className="w-5 h-5 md:w-4 md:h-4 text-clerky-backendButton border-gray-300 rounded focus:ring-clerky-backendButton touch-manipulation"
                             />
-                            <div className="flex-1">
-                              <p className="text-sm font-medium text-clerky-backendText dark:text-gray-200">
+                            <div className="flex-1 min-w-0">
+                              <p className="text-sm font-medium text-clerky-backendText dark:text-gray-200 truncate">
                                 {contact.name}
                               </p>
-                              <p className="text-xs text-gray-500 dark:text-gray-400">{contact.phone}</p>
+                              <p className="text-xs text-gray-500 dark:text-gray-400 truncate">{contact.phone}</p>
                             </div>
                           </div>
                         ))}
@@ -1639,23 +1689,24 @@ const GroupManager: React.FC = () => {
                           {isUpdating ? t('groupManager.adding') : t('groupManager.addParticipants')}
                         </Button>
                       </div>
-                      <div className="max-h-64 overflow-y-auto space-y-2">
+                      <div className="max-h-48 md:max-h-64 overflow-y-auto space-y-2">
                         {editParticipantsList.map((participant, index) => (
                           <div
                             key={index}
-                            className="flex items-center justify-between p-2 bg-gray-50 dark:bg-gray-800 rounded"
+                            className="flex items-center justify-between p-2.5 md:p-2 bg-gray-50 dark:bg-gray-800 rounded"
                           >
-                            <div>
-                              <p className="text-sm font-medium text-clerky-backendText dark:text-gray-200">
+                            <div className="flex-1 min-w-0 pr-2">
+                              <p className="text-sm font-medium text-clerky-backendText dark:text-gray-200 truncate">
                                 {participant.name || participant.phone}
                               </p>
                               {participant.name && (
-                                <p className="text-xs text-gray-500 dark:text-gray-400">{participant.phone}</p>
+                                <p className="text-xs text-gray-500 dark:text-gray-400 truncate">{participant.phone}</p>
                               )}
                             </div>
                             <button
                               onClick={() => handleEditRemoveParticipant(participant.phone)}
-                              className="text-red-600 dark:text-red-400 hover:text-red-800 dark:hover:text-red-300"
+                              className="text-red-600 dark:text-red-400 hover:text-red-800 dark:hover:text-red-300 text-lg md:text-base w-8 h-8 md:w-6 md:h-6 flex items-center justify-center touch-manipulation"
+                              aria-label="Remover"
                             >
                               ✕
                             </button>
@@ -1766,7 +1817,11 @@ const GroupManager: React.FC = () => {
               </div>
 
               <div className="flex justify-end gap-2 pt-4 border-t border-gray-200 dark:border-gray-700">
-                <Button variant="outline" onClick={handleCloseEditModal}>
+                <Button 
+                  variant="outline" 
+                  onClick={handleCloseEditModal}
+                  className="w-full sm:w-auto py-2.5 md:py-2 touch-manipulation"
+                >
                   {t('groupManager.close')}
                 </Button>
               </div>
@@ -1876,22 +1931,22 @@ const GroupManager: React.FC = () => {
                     {t('groupManager.loadingParticipants')}
                   </div>
                 ) : groupParticipants.length > 0 ? (
-                  <div className="max-h-64 overflow-y-auto space-y-2">
+                  <div className="max-h-48 md:max-h-64 overflow-y-auto space-y-2">
                     {groupParticipants.map((participant, index) => (
                       <div
                         key={index}
-                        className="flex items-center justify-between p-2 bg-gray-50 dark:bg-gray-800 rounded"
+                        className="flex items-center justify-between p-2.5 md:p-2 bg-gray-50 dark:bg-gray-800 rounded"
                       >
-                        <div className="flex-1">
-                          <p className="text-sm font-medium text-clerky-backendText dark:text-gray-200">
+                        <div className="flex-1 min-w-0 pr-2">
+                          <p className="text-sm font-medium text-clerky-backendText dark:text-gray-200 truncate">
                             {participant.name || t('groupManager.unknown')}
                           </p>
-                          <p className="text-xs text-gray-500 dark:text-gray-400 font-mono">
+                          <p className="text-xs text-gray-500 dark:text-gray-400 font-mono truncate">
                             {participant.phone || participant.id}
                           </p>
                         </div>
                         {participant.isAdmin && (
-                          <span className="px-2 py-1 text-xs bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400 rounded ml-2">
+                          <span className="px-2 py-1 text-xs bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400 rounded ml-2 flex-shrink-0">
                             {t('groupManager.admin')}
                           </span>
                         )}
@@ -1899,22 +1954,22 @@ const GroupManager: React.FC = () => {
                     ))}
                   </div>
                 ) : selectedGroup.participants && selectedGroup.participants.length > 0 ? (
-                  <div className="max-h-64 overflow-y-auto space-y-2">
+                  <div className="max-h-48 md:max-h-64 overflow-y-auto space-y-2">
                     {selectedGroup.participants.map((participant, index) => (
                       <div
                         key={index}
-                        className="flex items-center justify-between p-2 bg-gray-50 dark:bg-gray-800 rounded"
+                        className="flex items-center justify-between p-2.5 md:p-2 bg-gray-50 dark:bg-gray-800 rounded"
                       >
-                        <div className="flex-1">
-                          <p className="text-sm font-medium text-clerky-backendText dark:text-gray-200">
+                        <div className="flex-1 min-w-0 pr-2">
+                          <p className="text-sm font-medium text-clerky-backendText dark:text-gray-200 truncate">
                             {participant.name || t('groupManager.unknown')}
                           </p>
-                          <p className="text-xs text-gray-500 dark:text-gray-400 font-mono">
+                          <p className="text-xs text-gray-500 dark:text-gray-400 font-mono truncate">
                             {participant.id}
                           </p>
                         </div>
                         {participant.isAdmin && (
-                          <span className="px-2 py-1 text-xs bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400 rounded ml-2">
+                          <span className="px-2 py-1 text-xs bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400 rounded ml-2 flex-shrink-0">
                             {t('groupManager.admin')}
                           </span>
                         )}
@@ -1950,18 +2005,26 @@ const GroupManager: React.FC = () => {
                 value={mentionText}
                 onChange={(e) => setMentionText(e.target.value)}
                 placeholder={t('groupManager.mention.placeholder')}
-                className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-clerky-backendButton focus:border-transparent bg-white dark:bg-gray-700 text-clerky-backendText dark:text-gray-200 min-h-[150px]"
+                className="w-full px-4 py-3 md:py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-clerky-backendButton focus:border-transparent bg-white dark:bg-gray-700 text-clerky-backendText dark:text-gray-200 min-h-[180px] md:min-h-[150px] text-base md:text-sm"
               />
             </div>
-            <div className="flex justify-end gap-2">
-              <Button variant="outline" onClick={() => {
-                setShowMentionModal(false);
-                setMentionText('');
-                setSelectedGroup(null);
-              }}>
+            <div className="flex flex-col sm:flex-row justify-end gap-2">
+              <Button 
+                variant="outline" 
+                onClick={() => {
+                  setShowMentionModal(false);
+                  setMentionText('');
+                  setSelectedGroup(null);
+                }}
+                className="w-full sm:w-auto py-2.5 md:py-2 touch-manipulation"
+              >
                 {t('groupManager.cancel')}
               </Button>
-              <Button onClick={handleSendMention} disabled={isSendingMention || !mentionText.trim()}>
+              <Button 
+                onClick={handleSendMention} 
+                disabled={isSendingMention || !mentionText.trim()}
+                className="w-full sm:w-auto py-2.5 md:py-2 touch-manipulation"
+              >
                 {isSendingMention ? t('groupManager.mention.sending') : t('groupManager.mention.send')}
               </Button>
             </div>
@@ -1997,24 +2060,24 @@ const GroupManager: React.FC = () => {
                   </Button>
                 </div>
               </div>
-              <div className="max-h-48 overflow-y-auto space-y-2">
+              <div className="max-h-48 md:max-h-64 overflow-y-auto space-y-2">
                 {groups.map((group) => (
                   <div
                     key={group.id}
-                    className="flex items-center gap-2 p-2 bg-gray-50 dark:bg-gray-800 rounded"
+                    className="flex items-center gap-2 p-2.5 md:p-2 bg-gray-50 dark:bg-gray-800 rounded touch-manipulation"
                   >
                     <input
                       type="checkbox"
                       checked={selectedGroups.has(group.id)}
                       onChange={() => handleToggleGroupSelection(group.id)}
-                      className="w-4 h-4 text-clerky-backendButton border-gray-300 rounded focus:ring-clerky-backendButton"
+                      className="w-5 h-5 md:w-4 md:h-4 text-clerky-backendButton border-gray-300 rounded focus:ring-clerky-backendButton touch-manipulation"
                     />
-                    <div className="flex-1">
-                      <p className="text-sm font-medium text-clerky-backendText dark:text-gray-200">
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium text-clerky-backendText dark:text-gray-200 truncate">
                         {group.name || group.id}
                       </p>
                       {group.description && (
-                        <p className="text-xs text-gray-500 dark:text-gray-400 line-clamp-1">
+                        <p className="text-xs text-gray-500 dark:text-gray-400 line-clamp-1 truncate">
                           {group.description}
                         </p>
                       )}
@@ -2071,22 +2134,30 @@ const GroupManager: React.FC = () => {
                 value={bulkDescription}
                 onChange={(e) => setBulkDescription(e.target.value)}
                 placeholder={t('groupManager.descriptionPlaceholder')}
-                className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-clerky-backendButton focus:border-transparent bg-white dark:bg-gray-700 text-clerky-backendText dark:text-gray-200 min-h-[100px]"
+                className="w-full px-4 py-3 md:py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-clerky-backendButton focus:border-transparent bg-white dark:bg-gray-700 text-clerky-backendText dark:text-gray-200 min-h-[120px] md:min-h-[100px] text-base md:text-sm"
               />
             </div>
 
             {/* Botões */}
-            <div className="flex justify-end gap-2 pt-4 border-t border-gray-200 dark:border-gray-700">
-              <Button variant="outline" onClick={() => {
-                setShowBulkEditModal(false);
-                setSelectedGroups(new Set());
-                setBulkImage(null);
-                setBulkImagePreview(null);
-                setBulkDescription('');
-              }}>
+            <div className="flex flex-col sm:flex-row justify-end gap-2 pt-4 border-t border-gray-200 dark:border-gray-700">
+              <Button 
+                variant="outline" 
+                onClick={() => {
+                  setShowBulkEditModal(false);
+                  setSelectedGroups(new Set());
+                  setBulkImage(null);
+                  setBulkImagePreview(null);
+                  setBulkDescription('');
+                }}
+                className="w-full sm:w-auto py-2.5 md:py-2 touch-manipulation"
+              >
                 {t('groupManager.cancel')}
               </Button>
-              <Button onClick={handleBulkUpdate} disabled={isBulkUpdating || selectedGroups.size === 0}>
+              <Button 
+                onClick={handleBulkUpdate} 
+                disabled={isBulkUpdating || selectedGroups.size === 0}
+                className="w-full sm:w-auto py-2.5 md:py-2 touch-manipulation"
+              >
                 {isBulkUpdating ? t('groupManager.bulkEdit.applying') : t('groupManager.bulkEdit.apply')}
               </Button>
             </div>
@@ -2111,20 +2182,28 @@ const GroupManager: React.FC = () => {
                 value={mentionAllGroupsText}
                 onChange={(e) => setMentionAllGroupsText(e.target.value)}
                 placeholder={t('groupManager.mentionAllGroups.placeholder')}
-                className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-clerky-backendButton focus:border-transparent bg-white dark:bg-gray-700 text-clerky-backendText dark:text-gray-200 min-h-[150px]"
+                className="w-full px-4 py-3 md:py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-clerky-backendButton focus:border-transparent bg-white dark:bg-gray-700 text-clerky-backendText dark:text-gray-200 min-h-[180px] md:min-h-[150px] text-base md:text-sm"
               />
               <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
                 {t('groupManager.mentionAllGroups.helper', { count: groups.length.toString() })}
               </p>
             </div>
-            <div className="flex justify-end gap-2">
-              <Button variant="outline" onClick={() => {
-                setShowMentionAllGroupsModal(false);
-                setMentionAllGroupsText('');
-              }}>
+            <div className="flex flex-col sm:flex-row justify-end gap-2">
+              <Button 
+                variant="outline" 
+                onClick={() => {
+                  setShowMentionAllGroupsModal(false);
+                  setMentionAllGroupsText('');
+                }}
+                className="w-full sm:w-auto py-2.5 md:py-2 touch-manipulation"
+              >
                 {t('groupManager.cancel')}
               </Button>
-              <Button onClick={handleMentionAllGroups} disabled={isMentioningAllGroups || !mentionAllGroupsText.trim()}>
+              <Button 
+                onClick={handleMentionAllGroups} 
+                disabled={isMentioningAllGroups || !mentionAllGroupsText.trim()}
+                className="w-full sm:w-auto py-2.5 md:py-2 touch-manipulation"
+              >
                 {isMentioningAllGroups ? t('groupManager.mentionAllGroups.sending') : t('groupManager.mentionAllGroups.send')}
               </Button>
             </div>

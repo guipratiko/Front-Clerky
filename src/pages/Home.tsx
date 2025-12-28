@@ -3,6 +3,7 @@ import { AppLayout } from '../components/Layout';
 import { Card } from '../components/UI';
 import { useAuth } from '../contexts/AuthContext';
 import { useLanguage } from '../contexts/LanguageContext';
+import { useTheme } from '../contexts/ThemeContext';
 import { dashboardAPI, DashboardStats, RecentActivity } from '../services/api';
 import { useSocket } from '../hooks/useSocket';
 import {
@@ -81,14 +82,14 @@ const StatCard: React.FC<StatCardProps> = ({ title, value, subtitle, color = '#0
       />
       
       {/* Content */}
-      <div className="relative z-10 p-6">
+      <div className="relative z-10 p-4 md:p-6">
         <div className="flex flex-col">
-          <h3 className="text-[10px] font-bold text-gray-600 dark:text-gray-400 mb-4 uppercase tracking-[0.15em] letter-spacing-wide">
+          <h3 className="text-[9px] md:text-[10px] font-bold text-gray-600 dark:text-gray-400 mb-3 md:mb-4 uppercase tracking-[0.15em] letter-spacing-wide">
             {title}
           </h3>
           <div className="flex items-baseline gap-2 mb-2">
             <p 
-              className="text-5xl font-black leading-none tracking-tight"
+              className="text-3xl md:text-4xl lg:text-5xl font-black leading-none tracking-tight"
               style={{ 
                 color: color,
                 textShadow: `0 2px 4px ${glowColor}40`,
@@ -98,7 +99,7 @@ const StatCard: React.FC<StatCardProps> = ({ title, value, subtitle, color = '#0
             </p>
           </div>
           {subtitle && (
-            <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 mt-2 opacity-90">
+            <p className="text-[10px] md:text-xs font-semibold text-gray-500 dark:text-gray-400 mt-1 md:mt-2 opacity-90 line-clamp-2">
               {subtitle}
             </p>
           )}
@@ -134,6 +135,15 @@ interface InstanceStatusProps {
 
 const InstanceStatus: React.FC<InstanceStatusProps> = ({ instances }) => {
   const { t } = useLanguage();
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+
+  useEffect(() => {
+    const handleResize = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   const statusData = useMemo(
     () => [
@@ -162,24 +172,24 @@ const InstanceStatus: React.FC<InstanceStatusProps> = ({ instances }) => {
   );
 
   return (
-    <Card padding="lg" shadow="md">
-      <h2 className="text-xl font-semibold text-clerky-backendText dark:text-gray-200 mb-6">
+    <Card padding="md" shadow="md" className="p-4 md:p-8">
+      <h2 className="text-lg md:text-xl font-semibold text-clerky-backendText dark:text-gray-200 mb-4 md:mb-6">
         {t('dashboard.instances.title')}
       </h2>
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4 mb-4 md:mb-6">
         {statusData.map((status) => (
           <div key={status.name} className="text-center">
             <div
-              className="w-12 h-12 rounded-full mx-auto mb-2 flex items-center justify-center text-white font-bold"
+              className="w-10 h-10 md:w-12 md:h-12 rounded-full mx-auto mb-2 flex items-center justify-center text-white font-bold text-sm md:text-base"
               style={{ backgroundColor: status.color }}
             >
               {status.value}
             </div>
-            <p className="text-sm text-gray-600 dark:text-gray-400">{status.name}</p>
+            <p className="text-xs md:text-sm text-gray-600 dark:text-gray-400 line-clamp-2">{status.name}</p>
           </div>
         ))}
       </div>
-      <ResponsiveContainer width="100%" height={200}>
+      <ResponsiveContainer width="100%" height={isMobile ? 180 : 200}>
         <PieChart>
           <Pie
             data={statusData.filter((s) => s.value > 0)}
@@ -187,7 +197,7 @@ const InstanceStatus: React.FC<InstanceStatusProps> = ({ instances }) => {
             cy="50%"
             labelLine={false}
             label={({ name, percent }) => `${name}: ${((percent || 0) * 100).toFixed(0)}%`}
-            outerRadius={80}
+            outerRadius={isMobile ? 60 : 80}
             fill="#8884d8"
             dataKey="value"
           >
@@ -229,15 +239,15 @@ const RecentActivityList: React.FC<RecentActivityListProps> = ({ activities, onL
   };
 
   return (
-    <Card padding="lg" shadow="md">
-      <div className="flex items-center justify-between mb-6">
-        <h2 className="text-xl font-semibold text-clerky-backendText dark:text-gray-200">
+    <Card padding="md" shadow="md" className="p-4 md:p-8">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 md:gap-0 mb-4 md:mb-6">
+        <h2 className="text-lg md:text-xl font-semibold text-clerky-backendText dark:text-gray-200">
           {t('dashboard.recentActivity.title')}
         </h2>
         <select
           value={activityLimit}
           onChange={(e) => handleLimitChange(Number(e.target.value))}
-          className="px-3 py-1 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-clerky-backendText dark:text-gray-200 text-sm"
+          className="px-3 py-2 md:py-1 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-clerky-backendText dark:text-gray-200 text-sm md:text-sm w-full sm:w-auto touch-manipulation"
         >
           <option value={5}>5</option>
           <option value={10}>10</option>
@@ -245,7 +255,7 @@ const RecentActivityList: React.FC<RecentActivityListProps> = ({ activities, onL
         </select>
       </div>
 
-      <div className="space-y-4">
+      <div className="space-y-3 md:space-y-4">
         {/* Mensagens Recentes */}
         <div>
           <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
@@ -255,16 +265,16 @@ const RecentActivityList: React.FC<RecentActivityListProps> = ({ activities, onL
             {activities.messages.slice(0, activityLimit).map((message) => (
               <div
                 key={message.id}
-                className="p-3 bg-gray-50 dark:bg-gray-700 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors"
+                className="p-3 md:p-3 bg-gray-50 dark:bg-gray-700 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors"
               >
-                <div className="flex items-start justify-between">
-                  <div className="flex-1">
-                    <p className="text-sm font-medium text-clerky-backendText dark:text-gray-200">
+                <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2">
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium text-clerky-backendText dark:text-gray-200 truncate">
                       {message.contactName || message.contactPhone}
                     </p>
-                    <p className="text-sm text-gray-600 dark:text-gray-400 truncate">{message.content}</p>
+                    <p className="text-xs md:text-sm text-gray-600 dark:text-gray-400 truncate mt-1">{message.content}</p>
                   </div>
-                  <span className="text-xs text-gray-500 dark:text-gray-500 ml-2">{formatTime(message.timestamp)}</span>
+                  <span className="text-xs text-gray-500 dark:text-gray-500 sm:ml-2 flex-shrink-0">{formatTime(message.timestamp)}</span>
                 </div>
               </div>
             ))}
@@ -285,18 +295,18 @@ const RecentActivityList: React.FC<RecentActivityListProps> = ({ activities, onL
             {activities.contacts.slice(0, activityLimit).map((contact) => (
               <div
                 key={contact.id}
-                className="p-3 bg-gray-50 dark:bg-gray-700 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors"
+                className="p-3 md:p-3 bg-gray-50 dark:bg-gray-700 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors"
               >
-                <div className="flex items-start justify-between">
-                  <div className="flex-1">
-                    <p className="text-sm font-medium text-clerky-backendText dark:text-gray-200">
+                <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2">
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium text-clerky-backendText dark:text-gray-200 truncate">
                       {contact.name || contact.phone}
                     </p>
                     {contact.name && (
-                      <p className="text-xs text-gray-500 dark:text-gray-400">{contact.phone}</p>
+                      <p className="text-xs text-gray-500 dark:text-gray-400 truncate mt-1">{contact.phone}</p>
                     )}
                   </div>
-                  <span className="text-xs text-gray-500 dark:text-gray-500 ml-2">
+                  <span className="text-xs text-gray-500 dark:text-gray-500 sm:ml-2 flex-shrink-0">
                     {formatTime(contact.createdAt)}
                   </span>
                 </div>
@@ -319,17 +329,17 @@ const RecentActivityList: React.FC<RecentActivityListProps> = ({ activities, onL
             {activities.dispatches.slice(0, activityLimit).map((dispatch) => (
               <div
                 key={dispatch.id}
-                className="p-3 bg-gray-50 dark:bg-gray-700 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors"
+                className="p-3 md:p-3 bg-gray-50 dark:bg-gray-700 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors"
               >
-                <div className="flex items-start justify-between">
-                  <div className="flex-1">
-                    <p className="text-sm font-medium text-clerky-backendText dark:text-gray-200">{dispatch.name}</p>
-                    <p className="text-xs text-gray-500 dark:text-gray-400">
+                <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2">
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium text-clerky-backendText dark:text-gray-200 truncate">{dispatch.name}</p>
+                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-1 line-clamp-2">
                       {t(`dashboard.dispatches.status.${dispatch.status}`)} • {dispatch.stats.sent}/{dispatch.stats.total}{' '}
                       {t('dashboard.dispatches.sent')}
                     </p>
                   </div>
-                  <span className="text-xs text-gray-500 dark:text-gray-500 ml-2">
+                  <span className="text-xs text-gray-500 dark:text-gray-500 sm:ml-2 flex-shrink-0">
                     {formatTime(dispatch.createdAt)}
                   </span>
                 </div>
@@ -375,36 +385,48 @@ const ChartsSection: React.FC<ChartsSectionProps> = ({ stats }) => {
   );
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+    <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6">
       {/* Gráfico de Disparos */}
-      <Card padding="lg" shadow="md">
-        <h2 className="text-xl font-semibold text-clerky-backendText dark:text-gray-200 mb-6">
+      <Card padding="md" shadow="md" className="p-4 md:p-8">
+        <h2 className="text-lg md:text-xl font-semibold text-clerky-backendText dark:text-gray-200 mb-4 md:mb-6">
           {t('dashboard.charts.dispatches')}
         </h2>
-        <ResponsiveContainer width="100%" height={300}>
+        <ResponsiveContainer width="100%" height={250} className="md:h-[300px]">
           <BarChart data={dispatchesData}>
             <CartesianGrid strokeDasharray="3 3" />
-            <XAxis dataKey="name" />
-            <YAxis />
+            <XAxis 
+              dataKey="name" 
+              tick={{ fontSize: 12 }}
+              angle={-45}
+              textAnchor="end"
+              height={60}
+            />
+            <YAxis tick={{ fontSize: 12 }} />
             <Tooltip />
-            <Legend />
+            <Legend wrapperStyle={{ fontSize: '12px' }} />
             <Bar dataKey="value" fill="#0040FF" />
           </BarChart>
         </ResponsiveContainer>
       </Card>
 
       {/* Gráfico de Contatos por Coluna */}
-      <Card padding="lg" shadow="md">
-        <h2 className="text-xl font-semibold text-clerky-backendText dark:text-gray-200 mb-6">
+      <Card padding="md" shadow="md" className="p-4 md:p-8">
+        <h2 className="text-lg md:text-xl font-semibold text-clerky-backendText dark:text-gray-200 mb-4 md:mb-6">
           {t('dashboard.charts.contactsByColumn')}
         </h2>
-        <ResponsiveContainer width="100%" height={300}>
+        <ResponsiveContainer width="100%" height={250} className="md:h-[300px]">
           <BarChart data={contactsByColumnData}>
             <CartesianGrid strokeDasharray="3 3" />
-            <XAxis dataKey="name" />
-            <YAxis />
+            <XAxis 
+              dataKey="name" 
+              tick={{ fontSize: 12 }}
+              angle={-45}
+              textAnchor="end"
+              height={60}
+            />
+            <YAxis tick={{ fontSize: 12 }} />
             <Tooltip />
-            <Legend />
+            <Legend wrapperStyle={{ fontSize: '12px' }} />
             <Bar dataKey="value" fill="#00C0FF" />
           </BarChart>
         </ResponsiveContainer>
@@ -415,19 +437,26 @@ const ChartsSection: React.FC<ChartsSectionProps> = ({ stats }) => {
 
 const NewsAndPromotions: React.FC = () => {
   const { t } = useLanguage();
+  const { theme } = useTheme();
+
+  // URL baseada no tema
+  const newsletterUrl = theme === 'dark' 
+    ? 'https://clerky.com.br/app/Newsletter/dark'
+    : 'https://clerky.com.br/app/Newsletter';
 
   return (
-    <Card padding="lg" shadow="md" className="transition-all duration-200">
+    <Card padding="md" shadow="md" className="transition-all duration-200 p-4 md:p-8">
       <div className="flex flex-col h-full">
-        <h2 className="text-xl font-semibold text-clerky-backendText dark:text-gray-200 mb-4">
+        <h2 className="text-lg md:text-xl font-semibold text-clerky-backendText dark:text-gray-200 mb-3 md:mb-4">
           {t('dashboard.news.title')}
         </h2>
         
-        <div className="flex-1" style={{ minHeight: '500px' }}>
+        <div className="flex-1 overflow-hidden rounded-lg md:min-h-[500px]" style={{ minHeight: '400px' }}>
           <iframe
-            src="https://clerky.com.br/app/Newsletter"
+            key={theme} // Força recarregar quando o tema mudar
+            src={newsletterUrl}
             className="w-full h-full border-0 rounded-lg"
-            style={{ minHeight: '500px' }}
+            style={{ minHeight: '400px' }}
             title={t('dashboard.news.title')}
             sandbox="allow-same-origin allow-scripts allow-popups allow-forms"
           />
@@ -510,19 +539,19 @@ const Home: React.FC = () => {
 
   return (
     <AppLayout>
-      <div className="p-6 space-y-6 animate-fadeIn">
+      <div className="p-4 md:p-6 space-y-4 md:space-y-6 animate-fadeIn">
         {/* Mensagem de Boas-vindas */}
-        <Card padding="lg" shadow="lg">
-          <h1 className="text-2xl font-bold text-clerky-backendText dark:text-gray-200 mb-2">
+        <Card padding="md" shadow="lg" className="p-4 md:p-8">
+          <h1 className="text-xl md:text-2xl font-bold text-clerky-backendText dark:text-gray-200 mb-2">
             {t('dashboard.welcome', { name: user?.name?.split(' ')[0] || '' })}
           </h1>
-          <p className="text-gray-600 dark:text-gray-300">
+          <p className="text-sm md:text-base text-gray-600 dark:text-gray-300">
             {t('dashboard.welcomeMessage')}
           </p>
         </Card>
 
         {/* Cards de Estatísticas */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-3 lg:grid-cols-3 xl:grid-cols-6 gap-3 md:gap-4">
           <StatCard
             title={t('dashboard.stats.instances')}
             value={stats.instances.total}
@@ -565,7 +594,7 @@ const Home: React.FC = () => {
         <ChartsSection stats={stats} />
 
         {/* Atividades Recentes e Novidades/Promoções */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6">
           <RecentActivityList activities={recentActivity} />
           <NewsAndPromotions />
         </div>
