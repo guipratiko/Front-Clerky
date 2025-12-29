@@ -10,6 +10,15 @@ import { ContactList } from '../components/MindClerky/ContactList';
 import { Node } from '@xyflow/react';
 import { useSocket } from '../hooks/useSocket';
 
+// Variáveis disponíveis para personalização
+const AVAILABLE_VARIABLES = [
+  { variable: '$firstName', label: 'Primeiro Nome', description: 'Primeiro nome do contato' },
+  { variable: '$lastName', label: 'Último Nome', description: 'Último nome do contato' },
+  { variable: '$fullName', label: 'Nome Completo', description: 'Nome completo do contato' },
+  { variable: '$formattedPhone', label: 'Número Formatado', description: 'Número formatado (ex: (62) 99844-8536)' },
+  { variable: '$originalPhone', label: 'Número Original', description: 'Número original/normalizado' },
+];
+
 const MindClerky: React.FC = () => {
   const { t } = useLanguage();
   const { token } = useAuth();
@@ -650,6 +659,12 @@ const NodeSettingsPanel: React.FC<NodeSettingsPanelProps> = ({ node, instances, 
     }
   }, [node.type, node.data, loadSpreadsheets]);
 
+  // Função para inserir variável em um campo
+  const handleInsertVariable = (variable: string, field: 'content' | 'caption') => {
+    const currentValue = (node.data as any)?.[field] || '';
+    onUpdate({ [field]: currentValue + variable });
+  };
+
   if (node.type === 'whatsappTrigger') {
     const triggerData = node.data as { instanceId?: string };
     return (
@@ -941,7 +956,7 @@ const NodeSettingsPanel: React.FC<NodeSettingsPanelProps> = ({ node, instances, 
             placeholder="1.5"
           />
           <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-            {t('mindClerky.nodeSettings.delayHelper') || 'Tempo de espera antes de enviar a mensagem para simular digitação (em segundos). Ex: 1.5 = 1 segundo e meio'}
+            Tempo de espera antes de enviar a mensagem para simular digitação (em segundos). Ex: 1.5 = 1 segundo e meio
           </p>
         </div>
 
@@ -951,13 +966,28 @@ const NodeSettingsPanel: React.FC<NodeSettingsPanelProps> = ({ node, instances, 
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
               {t('templateBuilder.textMessage')}
             </label>
-            <textarea
-              value={responseData.content || ''}
-              onChange={(e) => onUpdate({ content: e.target.value })}
-              className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-clerky-backendButton focus:border-transparent bg-white dark:bg-gray-700 text-clerky-backendText dark:text-gray-200"
-              rows={4}
-              placeholder={t('templateBuilder.messagePlaceholder')}
-            />
+            <div className="mb-2">
+              <div className="flex flex-wrap gap-2 mb-2">
+                {AVAILABLE_VARIABLES.map((v) => (
+                  <button
+                    key={v.variable}
+                    type="button"
+                    onClick={() => handleInsertVariable(v.variable, 'content')}
+                    className="px-2 py-1 text-xs bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300 rounded hover:bg-blue-200 dark:hover:bg-blue-800"
+                    title={v.description}
+                  >
+                    {v.label}
+                  </button>
+                ))}
+              </div>
+              <textarea
+                value={responseData.content || ''}
+                onChange={(e) => onUpdate({ content: e.target.value })}
+                className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-clerky-backendButton focus:border-transparent bg-white dark:bg-gray-700 text-clerky-backendText dark:text-gray-200"
+                rows={4}
+                placeholder={t('templateBuilder.messagePlaceholder')}
+              />
+            </div>
           </div>
         )}
 
@@ -993,13 +1023,28 @@ const NodeSettingsPanel: React.FC<NodeSettingsPanelProps> = ({ node, instances, 
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
               {t('templateBuilder.caption')}
             </label>
-            <textarea
-              value={responseData.caption || ''}
-              onChange={(e) => onUpdate({ caption: e.target.value })}
-              className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-clerky-backendButton focus:border-transparent bg-white dark:bg-gray-700 text-clerky-backendText dark:text-gray-200"
-              rows={3}
-              placeholder={t('templateBuilder.captionPlaceholder')}
-            />
+            <div className="mb-2">
+              <div className="flex flex-wrap gap-2 mb-2">
+                {AVAILABLE_VARIABLES.map((v) => (
+                  <button
+                    key={v.variable}
+                    type="button"
+                    onClick={() => handleInsertVariable(v.variable, 'caption')}
+                    className="px-2 py-1 text-xs bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300 rounded hover:bg-blue-200 dark:hover:bg-blue-800"
+                    title={v.description}
+                  >
+                    {v.label}
+                  </button>
+                ))}
+              </div>
+              <textarea
+                value={responseData.caption || ''}
+                onChange={(e) => onUpdate({ caption: e.target.value })}
+                className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-clerky-backendButton focus:border-transparent bg-white dark:bg-gray-700 text-clerky-backendText dark:text-gray-200"
+                rows={3}
+                placeholder={t('templateBuilder.captionPlaceholder')}
+              />
+            </div>
           </div>
         )}
 

@@ -47,6 +47,15 @@ export interface ChangePasswordData {
   newPassword: string;
 }
 
+export interface ForgotPasswordData {
+  email: string;
+}
+
+export interface ResetPasswordData {
+  token: string;
+  password: string;
+}
+
 export interface ApiError {
   status: string;
   message: string;
@@ -263,6 +272,20 @@ export const authAPI = {
   changePassword: async (data: ChangePasswordData): Promise<AuthResponse> => {
     return request<AuthResponse>('/auth/password', {
       method: 'PUT',
+      body: JSON.stringify(data),
+    });
+  },
+
+  forgotPassword: async (data: ForgotPasswordData): Promise<{ status: string; message: string }> => {
+    return request<{ status: string; message: string }>('/auth/forgot-password', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  },
+
+  resetPassword: async (data: ResetPasswordData): Promise<{ status: string; message: string }> => {
+    return request<{ status: string; message: string }>('/auth/reset-password', {
+      method: 'POST',
       body: JSON.stringify(data),
     });
   },

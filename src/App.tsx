@@ -8,7 +8,9 @@ import MobileRestrictedRoute from './components/Auth/MobileRestrictedRoute';
 import PremiumRoute from './components/Auth/PremiumRoute';
 import Login from './components/Login/Login';
 import SignUp from './components/SignUp/SignUp';
+import ForgotPassword from './components/ForgotPassword/ForgotPassword';
 import ActivateAccount from './pages/ActivateAccount';
+import ResetPassword from './pages/ResetPassword';
 import Home from './pages/Home';
 import Instances from './pages/Instances';
 import Dispatches from './pages/Dispatches';
@@ -28,6 +30,8 @@ function AppContent() {
     <Routes>
       <Route path="/login" element={<Login />} />
       <Route path="/signup" element={<SignUp />} />
+      <Route path="/forgot-password" element={<ForgotPassword />} />
+      <Route path="/reset-password" element={<ResetPassword />} />
       <Route path="/ativar-conta" element={<ActivateAccount />} />
       <Route
         path="/inicio"

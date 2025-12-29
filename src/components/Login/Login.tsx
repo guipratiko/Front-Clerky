@@ -103,12 +103,12 @@ const Login: React.FC = () => {
 
                 {/* Esqueci minha senha */}
                 <div className="flex justify-end">
-                  <a 
-                    href="#forgot" 
+                  <Link 
+                    to="/forgot-password"
                     className="text-sm text-clerky-backendButton hover:opacity-80 transition-smooth"
                   >
                     {t('login.forgotPassword')}
-                  </a>
+                  </Link>
                 </div>
 
                 {/* Botão de Submit */}
