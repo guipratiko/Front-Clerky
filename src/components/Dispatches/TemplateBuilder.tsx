@@ -90,10 +90,6 @@ const SequenceBuilder: React.FC<SequenceBuilderProps> = ({ content, setContent }
     if (steps.length < 2) {
       return t('templateBuilder.sequenceMinSteps');
     }
-    const types = new Set(steps.map((s: any) => s.type));
-    if (types.size < 2) {
-      return t('templateBuilder.sequenceDistinctTypes');
-    }
     return null;
   };
 
@@ -156,8 +152,14 @@ const SequenceBuilder: React.FC<SequenceBuilderProps> = ({ content, setContent }
                     } else if (newType === 'file') {
                       newContent = { fileUrl: '', fileName: '' };
                     }
-                    updateStep(index, 'type', newType);
-                    updateStep(index, 'content', newContent);
+                    // Atualizar tipo e conteúdo em uma única operação
+                    const newSteps = [...steps];
+                    newSteps[index] = {
+                      ...newSteps[index],
+                      type: newType,
+                      content: newContent,
+                    };
+                    setContent({ ...content, steps: newSteps });
                   }}
                   className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-lg dark:bg-gray-800 dark:text-gray-200"
                 >
@@ -617,11 +619,6 @@ const TemplateBuilder: React.FC<TemplateBuilderProps> = ({
       const steps = content.steps || [];
       if (steps.length < 2) {
         alert(t('templateBuilder.sequenceMinSteps'));
-        return;
-      }
-      const types = new Set(steps.map((s: any) => s.type));
-      if (types.size < 2) {
-        alert(t('templateBuilder.sequenceDistinctTypes'));
         return;
       }
     }

@@ -6,6 +6,7 @@ import { useLanguage } from '../../contexts/LanguageContext';
 import { useAuth } from '../../contexts/AuthContext';
 import { useForm } from '../../hooks/useForm';
 import { validators } from '../../utils/validators';
+import { normalizeCPFInput, cleanCPF } from '../../utils/cpfUtils';
 import logo from '../../img/logo.png';
 
 interface SignUpFormData {
@@ -13,6 +14,7 @@ interface SignUpFormData {
   email: string;
   password: string;
   confirmPassword: string;
+  cpf: string;
   acceptTerms: boolean;
 }
 
@@ -26,10 +28,13 @@ const SignUp: React.FC = () => {
       email: '',
       password: '',
       confirmPassword: '',
+      cpf: '',
       acceptTerms: false,
     },
     onSubmit: async (values) => {
-      await register(values.name, values.email, values.password);
+      // Enviar CPF apenas com números
+      const cleanCpf = cleanCPF(values.cpf);
+      await register(values.name, values.email, values.password, cleanCpf);
     },
     validate: (values) => {
       const errors: Partial<Record<keyof SignUpFormData, string>> = {};
@@ -42,6 +47,11 @@ const SignUp: React.FC = () => {
       const emailResult = validators.email(values.email);
       if (!emailResult.isValid && emailResult.error) {
         errors.email = t(emailResult.error);
+      }
+
+      const cpfResult = validators.cpf(values.cpf);
+      if (!cpfResult.isValid && cpfResult.error) {
+        errors.cpf = t(cpfResult.error);
       }
 
       const passwordResult = validators.password(values.password);
@@ -61,6 +71,17 @@ const SignUp: React.FC = () => {
       return errors;
     },
   });
+
+  // Handler customizado para CPF com formatação
+  const handleCPFChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const formatted = normalizeCPFInput(e.target.value);
+    handleChange({
+      target: {
+        name: 'cpf',
+        value: formatted,
+      },
+    } as React.ChangeEvent<HTMLInputElement>);
+  };
 
   return (
     <Layout>
@@ -120,6 +141,20 @@ const SignUp: React.FC = () => {
                   placeholder={t('login.emailPlaceholder')}
                   autoComplete="email"
                   error={errors.email}
+                />
+
+                {/* Campo CPF */}
+                <Input
+                  id="cpf"
+                  name="cpf"
+                  type="text"
+                  label={t('signup.cpf')}
+                  value={values.cpf}
+                  onChange={handleCPFChange}
+                  placeholder="000.000.000-00"
+                  autoComplete="off"
+                  maxLength={14}
+                  error={errors.cpf}
                 />
 
                 {/* Campo Senha */}

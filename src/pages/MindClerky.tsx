@@ -25,6 +25,7 @@ const MindClerky: React.FC = () => {
   const [showContactsModal, setShowContactsModal] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [showVariablesModal, setShowVariablesModal] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   // Estados do formulário de criação
   const [workflowName, setWorkflowName] = useState('');
@@ -35,10 +36,12 @@ const MindClerky: React.FC = () => {
   const loadWorkflows = useCallback(async () => {
     try {
       setIsLoading(true);
+      setError(null);
       const response = await workflowAPI.getAll();
       setWorkflows(response.workflows);
     } catch (error: any) {
       console.error('Erro ao carregar workflows:', error);
+      setError(error.message || 'Erro ao carregar workflows');
     } finally {
       setIsLoading(false);
     }
@@ -141,9 +144,10 @@ const MindClerky: React.FC = () => {
       setWorkflowNodes([]);
       setWorkflowEdges([]);
       setSelectedWorkflow(response.workflow);
+      setError(null);
     } catch (error: any) {
       console.error('Erro ao criar workflow:', error);
-      alert(error.message || 'Erro ao criar workflow');
+      setError(error.message || 'Erro ao criar workflow');
     }
   };
 
@@ -164,10 +168,11 @@ const MindClerky: React.FC = () => {
       setTimeout(() => {
         setIsSaving(false);
       }, 1000);
+      setError(null);
     } catch (error: any) {
       console.error('Erro ao salvar workflow:', error);
       setIsSaving(false);
-      alert(error.message || 'Erro ao salvar workflow');
+      setError(error.message || 'Erro ao salvar workflow');
     }
   };
 
@@ -181,9 +186,10 @@ const MindClerky: React.FC = () => {
       if (selectedWorkflow?.id === workflowId) {
         setSelectedWorkflow(null);
       }
+      setError(null);
     } catch (error: any) {
       console.error('Erro ao deletar workflow:', error);
-      alert(error.message || 'Erro ao deletar workflow');
+      setError(error.message || 'Erro ao deletar workflow');
     }
   };
 
@@ -220,9 +226,10 @@ const MindClerky: React.FC = () => {
       setIsClearingContacts(true);
       await workflowAPI.clearContacts(selectedWorkflow.id);
       setWorkflowContacts([]);
+      setError(null);
     } catch (error: any) {
       console.error('Erro ao limpar contatos:', error);
-      alert(error.message || 'Erro ao limpar contatos');
+      setError(error.message || 'Erro ao limpar contatos');
     } finally {
       setIsClearingContacts(false);
     }
@@ -262,6 +269,17 @@ const MindClerky: React.FC = () => {
               {t('mindClerky.createWorkflow')}
             </Button>
           </div>
+
+          {error && (
+            <Card className="mb-6 border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-900/20">
+              <div className="flex items-center gap-3">
+                <svg className="w-5 h-5 text-red-600 dark:text-red-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <p className="text-red-600 dark:text-red-400">{error}</p>
+              </div>
+            </Card>
+          )}
 
           {isLoading ? (
             <Card>
@@ -409,6 +427,18 @@ const MindClerky: React.FC = () => {
               </Button>
             </div>
           </div>
+
+          {/* Mensagem de erro */}
+          {error && (
+            <div className="bg-red-50 dark:bg-red-900/20 border-b border-red-200 dark:border-red-800 px-4 py-3">
+              <div className="flex items-center gap-3">
+                <svg className="w-5 h-5 text-red-600 dark:text-red-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <p className="text-red-600 dark:text-red-400 text-sm">{error}</p>
+              </div>
+            </div>
+          )}
 
           {/* Canvas do editor */}
           <div className="flex-1 relative">

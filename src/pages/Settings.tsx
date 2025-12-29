@@ -731,22 +731,22 @@ const Settings: React.FC = () => {
                             Cor:
                           </label>
                           <div className="flex items-center gap-2 w-full sm:w-auto">
-                            <input
-                              type="color"
-                              value={labelColors[label.id] || label.color}
-                              onChange={(e) => handleLabelColorChange(label.id, e.target.value)}
+                          <input
+                            type="color"
+                            value={labelColors[label.id] || label.color}
+                            onChange={(e) => handleLabelColorChange(label.id, e.target.value)}
                               className="w-12 h-10 md:h-8 rounded border border-gray-300 dark:border-gray-600 cursor-pointer touch-manipulation flex-shrink-0"
-                            />
-                            <Input
-                              id={`label-color-${label.id}`}
-                              type="text"
-                              value={labelColors[label.id] || label.color}
-                              onChange={(e) => handleLabelColorChange(label.id, e.target.value)}
-                              placeholder="#FF5733"
+                          />
+                          <Input
+                            id={`label-color-${label.id}`}
+                            type="text"
+                            value={labelColors[label.id] || label.color}
+                            onChange={(e) => handleLabelColorChange(label.id, e.target.value)}
+                            placeholder="#FF5733"
                               className="flex-1 min-w-0"
-                              maxLength={7}
-                              pattern="^#[0-9A-Fa-f]{6}$"
-                            />
+                            maxLength={7}
+                            pattern="^#[0-9A-Fa-f]{6}$"
+                          />
                           </div>
                         </div>
                       </div>

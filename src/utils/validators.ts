@@ -54,5 +54,43 @@ export const validators = {
     }
     return { isValid: true };
   },
+
+  cpf: (value: string): ValidationResult => {
+    if (!value) {
+      return { isValid: false, error: 'validation.cpfRequired' };
+    }
+    const clean = value.replace(/\D/g, '');
+    if (clean.length !== 11) {
+      return { isValid: false, error: 'validation.cpfInvalid' };
+    }
+    // Validação básica de CPF (verificar dígitos verificadores)
+    if (/^(\d)\1{10}$/.test(clean)) {
+      return { isValid: false, error: 'validation.cpfInvalid' };
+    }
+    // Validação completa dos dígitos verificadores
+    let sum = 0;
+    for (let i = 0; i < 9; i++) {
+      sum += parseInt(clean.charAt(i)) * (10 - i);
+    }
+    let remainder = (sum * 10) % 11;
+    if (remainder === 10 || remainder === 11) {
+      remainder = 0;
+    }
+    if (remainder !== parseInt(clean.charAt(9))) {
+      return { isValid: false, error: 'validation.cpfInvalid' };
+    }
+    sum = 0;
+    for (let i = 0; i < 10; i++) {
+      sum += parseInt(clean.charAt(i)) * (11 - i);
+    }
+    remainder = (sum * 10) % 11;
+    if (remainder === 10 || remainder === 11) {
+      remainder = 0;
+    }
+    if (remainder !== parseInt(clean.charAt(10))) {
+      return { isValid: false, error: 'validation.cpfInvalid' };
+    }
+    return { isValid: true };
+  },
 };
 

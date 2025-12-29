@@ -2012,9 +2012,9 @@ const GroupManager: React.FC = () => {
               <Button 
                 variant="outline" 
                 onClick={() => {
-                  setShowMentionModal(false);
-                  setMentionText('');
-                  setSelectedGroup(null);
+                setShowMentionModal(false);
+                setMentionText('');
+                setSelectedGroup(null);
                 }}
                 className="w-full sm:w-auto py-2.5 md:py-2 touch-manipulation"
               >
@@ -2143,11 +2143,11 @@ const GroupManager: React.FC = () => {
               <Button 
                 variant="outline" 
                 onClick={() => {
-                  setShowBulkEditModal(false);
-                  setSelectedGroups(new Set());
-                  setBulkImage(null);
-                  setBulkImagePreview(null);
-                  setBulkDescription('');
+                setShowBulkEditModal(false);
+                setSelectedGroups(new Set());
+                setBulkImage(null);
+                setBulkImagePreview(null);
+                setBulkDescription('');
                 }}
                 className="w-full sm:w-auto py-2.5 md:py-2 touch-manipulation"
               >
@@ -2192,8 +2192,8 @@ const GroupManager: React.FC = () => {
               <Button 
                 variant="outline" 
                 onClick={() => {
-                  setShowMentionAllGroupsModal(false);
-                  setMentionAllGroupsText('');
+                setShowMentionAllGroupsModal(false);
+                setMentionAllGroupsText('');
                 }}
                 className="w-full sm:w-auto py-2.5 md:py-2 touch-manipulation"
               >

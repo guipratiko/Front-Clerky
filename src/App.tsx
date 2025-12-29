@@ -5,8 +5,10 @@ import { ThemeProvider } from './contexts/ThemeContext';
 import { AuthProvider } from './contexts/AuthContext';
 import ProtectedRoute from './components/Auth/ProtectedRoute';
 import MobileRestrictedRoute from './components/Auth/MobileRestrictedRoute';
+import PremiumRoute from './components/Auth/PremiumRoute';
 import Login from './components/Login/Login';
 import SignUp from './components/SignUp/SignUp';
+import ActivateAccount from './pages/ActivateAccount';
 import Home from './pages/Home';
 import Instances from './pages/Instances';
 import Dispatches from './pages/Dispatches';
@@ -26,6 +28,7 @@ function AppContent() {
     <Routes>
       <Route path="/login" element={<Login />} />
       <Route path="/signup" element={<SignUp />} />
+      <Route path="/ativar-conta" element={<ActivateAccount />} />
       <Route
         path="/inicio"
         element={
@@ -38,7 +41,9 @@ function AppContent() {
         path="/gerenciador-conexoes"
         element={
           <ProtectedRoute>
+            <PremiumRoute>
             <Instances />
+            </PremiumRoute>
           </ProtectedRoute>
         }
       />
@@ -46,7 +51,9 @@ function AppContent() {
         path="/disparos"
         element={
           <ProtectedRoute>
+            <PremiumRoute>
             <Dispatches />
+            </PremiumRoute>
           </ProtectedRoute>
         }
       />
@@ -54,9 +61,11 @@ function AppContent() {
         path="/crm"
         element={
           <ProtectedRoute>
-            <MobileRestrictedRoute>
-              <CRM />
-            </MobileRestrictedRoute>
+            <PremiumRoute>
+              <MobileRestrictedRoute>
+            <CRM />
+              </MobileRestrictedRoute>
+            </PremiumRoute>
           </ProtectedRoute>
         }
       />
@@ -64,9 +73,11 @@ function AppContent() {
         path="/mindclerky"
         element={
           <ProtectedRoute>
-            <MobileRestrictedRoute>
-              <MindClerky />
-            </MobileRestrictedRoute>
+            <PremiumRoute>
+              <MobileRestrictedRoute>
+            <MindClerky />
+              </MobileRestrictedRoute>
+            </PremiumRoute>
           </ProtectedRoute>
         }
       />
@@ -74,7 +85,9 @@ function AppContent() {
         path="/integracao"
         element={
           <ProtectedRoute>
+            <PremiumRoute>
             <Integration />
+            </PremiumRoute>
           </ProtectedRoute>
         }
       />
@@ -82,7 +95,9 @@ function AppContent() {
         path="/agente-ia"
         element={
           <ProtectedRoute>
+            <PremiumRoute>
             <AIAgentPage />
+            </PremiumRoute>
           </ProtectedRoute>
         }
       />
@@ -106,7 +121,9 @@ function AppContent() {
         path="/gerenciador-grupos"
         element={
           <ProtectedRoute>
+            <PremiumRoute>
             <GroupManager />
+            </PremiumRoute>
           </ProtectedRoute>
         }
       />

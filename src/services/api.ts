@@ -1,7 +1,7 @@
 import type { AssistedConfig } from '../types/aiAgent';
 
 const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:4331/api';
-const MINDLERKY_API_URL = process.env.REACT_APP_MINDLERKY_URL || 'http://localhost:4333/api';
+const MINDLERKY_API_URL = process.env.REACT_APP_MINDLERKY_URL || 'https://mdc.clerky.com.br/api';
 
 export interface LoginData {
   email: string;
@@ -12,6 +12,7 @@ export interface RegisterData {
   name: string;
   email: string;
   password: string;
+  cpf: string;
 }
 
 export interface User {
@@ -22,6 +23,8 @@ export interface User {
   companyName?: string | null;
   phone?: string | null;
   timezone?: string;
+  isPremium?: boolean;
+  cpf?: string;
 }
 
 export interface AuthResponse {
@@ -128,7 +131,7 @@ export interface DeleteInstanceResponse {
 
 
 // Função auxiliar para fazer requisições
-const request = async <T>(
+export const request = async <T>(
   endpoint: string,
   options: RequestInit = {}
 ): Promise<T> => {
@@ -173,10 +176,30 @@ const requestMindClerky = async <T>(
     ...options,
   };
 
+  try {
   const response = await fetch(`${MINDLERKY_API_URL}${endpoint}`, config);
-  const data = await response.json();
 
+    // Se a resposta não for ok, tentar parsear JSON
   if (!response.ok) {
+      let data: any;
+      try {
+        data = await response.json();
+      } catch {
+        // Se não conseguir parsear JSON, pode ser erro de conexão
+        if (response.status === 503 || response.status === 0) {
+          const error: ApiError = {
+            status: 'error',
+            message: 'Serviço de workflows temporariamente indisponível',
+          };
+          throw error;
+        }
+        const error: ApiError = {
+          status: 'error',
+          message: 'Erro ao processar requisição. Tente novamente.',
+        };
+        throw error;
+      }
+
     const error: ApiError = {
       status: data.status || 'error',
       message: data.message || 'Erro ao processar requisição. Tente novamente.',
@@ -184,7 +207,30 @@ const requestMindClerky = async <T>(
     throw error;
   }
 
+    const data = await response.json();
   return data;
+  } catch (error: any) {
+    // Se for erro de rede (serviço não está rodando)
+    if (error instanceof TypeError && error.message.includes('fetch')) {
+      const networkError: ApiError = {
+        status: 'error',
+        message: 'Serviço de workflows temporariamente indisponível',
+      };
+      throw networkError;
+    }
+    
+    // Se já for um ApiError, apenas relançar
+    if (error.status && error.message) {
+      throw error;
+    }
+
+    // Erro genérico
+    const genericError: ApiError = {
+      status: 'error',
+      message: 'Erro ao processar requisição. Tente novamente.',
+    };
+    throw genericError;
+  }
 };
 
 // API de Autenticação
