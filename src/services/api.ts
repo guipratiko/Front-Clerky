@@ -1,7 +1,7 @@
 import type { AssistedConfig } from '../types/aiAgent';
 
 const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:4331/api';
-const MINDLERKY_API_URL = process.env.REACT_APP_MINDLERKY_URL || 'https://mdc.clerky.com.br/api';
+const MINDLERKY_API_URL = process.env.REACT_APP_MINDLERKY_URL || 'http://localhost:4333/api';
 
 export interface LoginData {
   email: string;
