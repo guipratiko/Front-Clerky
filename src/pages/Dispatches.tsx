@@ -44,7 +44,20 @@ const Dispatches: React.FC = () => {
       setIsLoadingDispatches(true);
       setError(null);
       const response = await dispatchAPI.getDispatches();
-      setDispatches(response.dispatches);
+      // Garantir que todos os dispatches tenham stats e settings válidos
+      const validatedDispatches = response.dispatches.map((dispatch) => ({
+        ...dispatch,
+        stats: dispatch.stats || {
+          sent: 0,
+          failed: 0,
+          invalid: 0,
+          total: 0,
+        },
+        settings: dispatch.settings || {
+          speed: 'normal' as const,
+        },
+      }));
+      setDispatches(validatedDispatches);
     } catch (err: any) {
       setError(err.message || 'Erro ao carregar disparos');
     } finally {
@@ -83,7 +96,7 @@ const Dispatches: React.FC = () => {
       setDispatches((prevDispatches) => {
         const index = prevDispatches.findIndex((d) => d.id === data.dispatch.id);
         if (index >= 0) {
-          // Atualizar disparo existente, preservando stats existente se não vier na atualização
+          // Atualizar disparo existente, preservando stats e settings existentes se não vierem na atualização
           const updated = [...prevDispatches];
           updated[index] = {
             ...updated[index],
@@ -94,6 +107,10 @@ const Dispatches: React.FC = () => {
               failed: 0,
               invalid: 0,
               total: 0,
+            },
+            // Garantir que settings sempre exista
+            settings: data.dispatch.settings || updated[index].settings || {
+              speed: 'normal',
             },
           };
           return updated;
@@ -337,15 +354,15 @@ const Dispatches: React.FC = () => {
                       // startDate vem no formato "YYYY-MM-DD"
                       const [year, month, day] = dispatch.schedule.startDate.split('-');
                       const date = `${day}/${month}/${year}`;
-                      const time = dispatch.schedule.startTime;
+                      const time = dispatch.schedule.startTime || '';
                       return `${date} às ${time}`;
                     }
-                    return dispatch.schedule.startTime;
+                    return dispatch.schedule.startTime || '';
                   };
 
                   // Formatar velocidade
                   const getSpeedLabel = () => {
-                    const speed = dispatch.settings.speed;
+                    const speed = dispatch.settings?.speed || 'normal';
                     const speedKey = `dispatchCreator.speed${speed.charAt(0).toUpperCase() + speed.slice(1)}`;
                     const fullLabel = t(speedKey);
                     // Extrair apenas o nome da velocidade (antes do parêntese)
