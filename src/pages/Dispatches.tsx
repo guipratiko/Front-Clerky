@@ -83,11 +83,18 @@ const Dispatches: React.FC = () => {
       setDispatches((prevDispatches) => {
         const index = prevDispatches.findIndex((d) => d.id === data.dispatch.id);
         if (index >= 0) {
-          // Atualizar disparo existente
+          // Atualizar disparo existente, preservando stats existente se não vier na atualização
           const updated = [...prevDispatches];
           updated[index] = {
             ...updated[index],
             ...data.dispatch,
+            // Garantir que stats sempre exista
+            stats: data.dispatch.stats || updated[index].stats || {
+              sent: 0,
+              failed: 0,
+              invalid: 0,
+              total: 0,
+            },
           };
           return updated;
         } else {
@@ -359,7 +366,7 @@ const Dispatches: React.FC = () => {
                             </div>
                             <div className="flex gap-4 flex-wrap">
                               <span className="font-medium">{t('dispatches.sent')}:</span>
-                              <span>{dispatch.stats.sent}/{dispatch.stats.total}</span>
+                              <span>{dispatch.stats?.sent ?? 0}/{dispatch.stats?.total ?? 0}</span>
                             </div>
                             {instance && (
                               <div className="flex gap-4 flex-wrap">

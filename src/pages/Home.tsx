@@ -335,7 +335,7 @@ const RecentActivityList: React.FC<RecentActivityListProps> = ({ activities, onL
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-medium text-clerky-backendText dark:text-gray-200 truncate">{dispatch.name}</p>
                     <p className="text-xs text-gray-500 dark:text-gray-400 mt-1 line-clamp-2">
-                      {t(`dashboard.dispatches.status.${dispatch.status}`)} • {dispatch.stats.sent}/{dispatch.stats.total}{' '}
+                      {t(`dashboard.dispatches.status.${dispatch.status}`)} • {dispatch.stats?.sent ?? 0}/{dispatch.stats?.total ?? 0}{' '}
                       {t('dashboard.dispatches.sent')}
                     </p>
                   </div>
