@@ -373,6 +373,15 @@ const Settings: React.FC = () => {
   return (
     <AppLayout>
       <div className="animate-fadeIn max-w-4xl mx-auto p-4 md:p-6">
+        <div className="mb-6">
+          <h1 className="text-3xl font-bold text-clerky-backendText dark:text-gray-200 mb-2">
+            {t('settings.title')}
+          </h1>
+          <p className="text-gray-600 dark:text-gray-400">
+            {t('settings.subtitle')}
+          </p>
+        </div>
+
         {/* Mensagem de sucesso */}
         {successMessage && (
           <div className="mb-4 md:mb-6 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 text-green-700 dark:text-green-400 px-4 py-3 rounded-lg animate-slideIn text-sm md:text-base">

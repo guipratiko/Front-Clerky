@@ -94,6 +94,7 @@ const translations = {
     'dashboard.title': 'Dashboard',
     'dashboard.welcome': 'Bem-vindo, {name}!',
     'dashboard.welcomeMessage': 'Aqui está um resumo das suas atividades e estatísticas.',
+    'dashboard.help': 'O Dashboard fornece uma visão geral completa do seu sistema.\n\n• Estatísticas de instâncias, contatos, disparos, workflows, grupos e agentes de IA\n• Gráficos visuais mostrando distribuição de contatos por coluna e status de disparos\n• Atividades recentes: mensagens, contatos e disparos\n• Status das instâncias conectadas\n• Acesso rápido a todas as funcionalidades principais',
     'dashboard.email': 'Email',
     'dashboard.logout': 'Sair',
     'dashboard.successMessage': 'Você está logado com sucesso. Esta é uma página de exemplo do dashboard.',
@@ -154,13 +155,21 @@ const translations = {
     'common.comingSoon': 'Em breve...',
     'common.loading': 'Carregando...',
     'common.error': 'Erro',
+    // Help
+    'help.title': 'Ajuda',
+    'help.openHelp': 'Abrir ajuda',
     // CRM
+    'crm.title': 'CRM',
+    'crm.subtitle': 'Gerencie seus contatos e conversas do WhatsApp',
+    'crm.help': 'O CRM permite gerenciar todos os seus contatos e conversas do WhatsApp.\n\n• Visualize contatos organizados em colunas do Kanban\n• Arraste e solte contatos entre colunas para organizá-los\n• Envie mensagens de texto, imagens, vídeos, áudios e arquivos\n• Visualize histórico completo de conversas\n• Adicione etiquetas para categorizar contatos\n• Busque contatos rapidamente\n• Gerencie múltiplas conversas simultaneamente',
     'crm.searchContacts': 'Buscar contatos...',
     'crm.dragContactsHere': 'Arraste contatos aqui',
     'crm.contact': 'contato',
     'crm.contacts': 'contatos',
     // Settings
     'settings.title': 'Configurações',
+    'settings.subtitle': 'Gerencie seu perfil, senha e preferências do sistema',
+    'settings.help': 'Na página de Configurações você pode:\n\n• Atualizar seu perfil: nome, foto, empresa e telefone\n• Alterar sua senha de acesso\n• Configurar seu fuso horário\n• Gerenciar as colunas do Kanban do CRM\n• Criar e gerenciar etiquetas para contatos',
     'settings.profile': 'Perfil',
     'settings.profilePicture': 'Foto de Perfil',
     'settings.changePicture': 'Alterar Foto',
@@ -221,7 +230,9 @@ const translations = {
     'error.deleteInstanceFailed': 'Erro ao deletar instância. Tente novamente.',
     'error.updateSettingsFailed': 'Erro ao atualizar configurações. Tente novamente.',
     // Instances
-    'instances.title': 'Instâncias WhatsApp',
+    'instances.title': 'Instâncias',
+    'instances.subtitle': 'Gerencie suas conexões WhatsApp e configure suas instâncias',
+    'instances.help': 'As Instâncias são suas conexões WhatsApp. Cada instância representa um número de WhatsApp conectado ao sistema.\n\n• Crie uma nova instância clicando em "Criar Instância"\n• Escaneie o QR Code exibido para conectar seu WhatsApp\n• Configure as opções de cada instância (rejeitar chamadas, ignorar grupos, etc.)\n• Monitore o status de cada instância (conectado, desconectado, etc.)\n• Gerencie múltiplas instâncias para diferentes números ou contas',
     'instances.create': 'Criar Instância',
     'instances.createNew': 'Criar Nova Instância',
     'instances.createButton': 'Criar',
@@ -263,6 +274,7 @@ const translations = {
     // Dispatches
     'dispatches.title': 'Disparos',
     'dispatches.subtitle': 'Gerencie templates e disparos de mensagens em massa',
+    'dispatches.help': 'A página de Disparos permite criar e gerenciar campanhas de mensagens em massa.\n\n• Templates: Crie templates de mensagens (texto, imagem, vídeo, áudio, etc.) que podem ser reutilizados\n• Disparos: Crie campanhas de envio em massa usando templates e listas de contatos\n• Configure velocidade de envio, agendamento e outras opções\n• Monitore o progresso dos disparos em tempo real\n• Gerencie contatos através de listas ou colunas do Kanban',
     'dispatches.templates': 'Templates',
     'dispatches.dispatches': 'Disparos',
     'dispatches.createTemplate': 'Criar Template',
@@ -404,6 +416,7 @@ const translations = {
     // MindClerky
     'mindClerky.title': 'MindClerky',
     'mindClerky.subtitle': 'Crie e gerencie workflows visuais com Flow-Based Programming',
+    'mindClerky.help': 'O MindClerky permite criar workflows visuais para automatizar processos.\n\n• Crie workflows arrastando e conectando nós na tela\n• Use gatilhos do WhatsApp para iniciar workflows\n• Adicione condições, delays e respostas automáticas\n• Integre com Typebot, planilhas Google e OpenAI\n• Monitore contatos que entraram em cada workflow\n• Ative ou desative workflows conforme necessário',
     'mindClerky.createWorkflow': 'Criar Workflow',
     'mindClerky.createNewWorkflow': 'Criar Novo Workflow',
     'mindClerky.workflowName': 'Nome do Workflow',
@@ -620,6 +633,8 @@ const translations = {
     'aiAgent.assisted.step10.perfectConversation': "Definição de 'conversa perfeita'",
     // AI Agent Page
     'aiAgent.title': 'Agente de IA',
+    'aiAgent.subtitle': 'Configure agentes de IA para automatizar conversas e gerenciar leads',
+    'aiAgent.help': 'O Agente de IA permite automatizar conversas usando inteligência artificial.\n\n• Crie agentes que respondem automaticamente às mensagens recebidas\n• Configure prompts personalizados para definir o comportamento do agente\n• Escolha entre modo manual (totalmente controlado) ou assistido (com sugestões)\n• Defina tempo de espera antes de responder\n• Ative transcrição de áudio para processar mensagens de voz\n• Visualize e gerencie leads gerados pelas conversas',
     'aiAgent.viewLeads': 'Ver Leads',
     'aiAgent.delete': 'Deletar',
     'aiAgent.newAgent': 'Novo Agente',
@@ -680,6 +695,8 @@ const translations = {
 
     // Group Manager
     'groupManager.title': 'Gerenciador de Grupos',
+    'groupManager.subtitle': 'Gerencie grupos do WhatsApp, crie novos grupos e configure permissões',
+    'groupManager.help': 'O Gerenciador de Grupos permite gerenciar grupos do WhatsApp.\n\n• Visualize todos os grupos de uma instância\n• Crie novos grupos com participantes do seu CRM\n• Edite informações do grupo (nome, descrição, foto)\n• Configure permissões (anúncios, bloqueio)\n• Gere códigos de convite para grupos\n• Mencione todos os participantes de um grupo\n• Gerencie participantes e administradores',
     'groupManager.loading': 'Carregando grupos...',
     'groupManager.refreshing': 'Atualizando...',
     'groupManager.refresh': 'Atualizar Grupos',
@@ -811,6 +828,7 @@ const translations = {
     // Documentation
     'documentation.title': 'Documentação da API Externa',
     'documentation.subtitle': 'Integre sua aplicação com o Clerky usando nossa API REST. Envie mensagens, gerencie contatos e muito mais.',
+    'documentation.help': 'A Documentação da API fornece todas as informações necessárias para integrar sua aplicação com o Clerky.\n\n• Endpoints disponíveis para envio de mensagens\n• Autenticação usando tokens de instância\n• Exemplos de requisições e respostas\n• Códigos de exemplo em diferentes linguagens\n• Gerenciamento de contatos e mensagens\n• Webhooks para receber notificações em tempo real\n\nSelecione uma instância para ver seu token de API e começar a integrar.',
     'documentation.selectInstance': 'Selecione uma instância para ver o token:',
     'documentation.apiToken': 'Token da API:',
     'documentation.copyToken': 'Copiar token',
@@ -997,6 +1015,7 @@ const translations = {
     'dashboard.title': 'Dashboard',
     'dashboard.welcome': 'Welcome, {name}!',
     'dashboard.welcomeMessage': 'Here is a summary of your activities and statistics.',
+    'dashboard.help': 'The Dashboard provides a complete overview of your system.\n\n• Statistics for instances, contacts, dispatches, workflows, groups, and AI agents\n• Visual charts showing contact distribution by column and dispatch status\n• Recent activities: messages, contacts, and dispatches\n• Status of connected instances\n• Quick access to all main features',
     'dashboard.email': 'Email',
     'dashboard.logout': 'Logout',
     'dashboard.successMessage': 'You are successfully logged in. This is an example dashboard page.',
@@ -1057,13 +1076,21 @@ const translations = {
     'common.comingSoon': 'Coming soon...',
     'common.loading': 'Loading...',
     'common.error': 'Error',
+    // Help
+    'help.title': 'Help',
+    'help.openHelp': 'Open help',
     // CRM
+    'crm.title': 'CRM',
+    'crm.subtitle': 'Manage your WhatsApp contacts and conversations',
+    'crm.help': 'The CRM allows you to manage all your WhatsApp contacts and conversations.\n\n• View contacts organized in Kanban columns\n• Drag and drop contacts between columns to organize them\n• Send text, image, video, audio, and file messages\n• View complete conversation history\n• Add labels to categorize contacts\n• Quickly search for contacts\n• Manage multiple conversations simultaneously',
     'crm.searchContacts': 'Search contacts...',
     'crm.dragContactsHere': 'Drag contacts here',
     'crm.contact': 'contact',
     'crm.contacts': 'contacts',
     // Settings
     'settings.title': 'Settings',
+    'settings.subtitle': 'Manage your profile, password and system preferences',
+    'settings.help': 'In the Settings page you can:\n\n• Update your profile: name, photo, company and phone\n• Change your access password\n• Configure your timezone\n• Manage CRM Kanban columns\n• Create and manage contact labels',
     'settings.profile': 'Profile',
     'settings.profilePicture': 'Profile Picture',
     'settings.changePicture': 'Change Picture',
@@ -1124,7 +1151,9 @@ const translations = {
     'error.deleteInstanceFailed': 'Error deleting instance. Please try again.',
     'error.updateSettingsFailed': 'Error updating settings. Please try again.',
     // Instances
-    'instances.title': 'WhatsApp Instances',
+    'instances.title': 'Instances',
+    'instances.subtitle': 'Manage your WhatsApp connections and configure your instances',
+    'instances.help': 'Instances are your WhatsApp connections. Each instance represents a WhatsApp number connected to the system.\n\n• Create a new instance by clicking "Create Instance"\n• Scan the displayed QR Code to connect your WhatsApp\n• Configure options for each instance (reject calls, ignore groups, etc.)\n• Monitor the status of each instance (connected, disconnected, etc.)\n• Manage multiple instances for different numbers or accounts',
     'instances.create': 'Create Instance',
     'instances.createNew': 'Create New Instance',
     'instances.createButton': 'Create',
@@ -1166,6 +1195,7 @@ const translations = {
     // Dispatches
     'dispatches.title': 'Dispatches',
     'dispatches.subtitle': 'Manage templates and mass message dispatches',
+    'dispatches.help': 'The Dispatches page allows you to create and manage mass messaging campaigns.\n\n• Templates: Create message templates (text, image, video, audio, etc.) that can be reused\n• Dispatches: Create mass sending campaigns using templates and contact lists\n• Configure sending speed, scheduling, and other options\n• Monitor dispatch progress in real-time\n• Manage contacts through lists or Kanban columns',
     'dispatches.templates': 'Templates',
     'dispatches.dispatches': 'Dispatches',
     'dispatches.createTemplate': 'Create Template',
@@ -1307,6 +1337,7 @@ const translations = {
     // MindClerky
     'mindClerky.title': 'MindClerky',
     'mindClerky.subtitle': 'Create and manage visual workflows with Flow-Based Programming',
+    'mindClerky.help': 'MindClerky allows you to create visual workflows to automate processes.\n\n• Create workflows by dragging and connecting nodes on the screen\n• Use WhatsApp triggers to start workflows\n• Add conditions, delays, and automatic responses\n• Integrate with Typebot, Google Sheets, and OpenAI\n• Monitor contacts that entered each workflow\n• Activate or deactivate workflows as needed',
     'mindClerky.createWorkflow': 'Create Workflow',
     'mindClerky.createNewWorkflow': 'Create New Workflow',
     'mindClerky.workflowName': 'Workflow Name',
@@ -1523,6 +1554,8 @@ const translations = {
     'aiAgent.assisted.step10.perfectConversation': "Definition of 'perfect conversation'",
     // AI Agent Page
     'aiAgent.title': 'AI Agent',
+    'aiAgent.subtitle': 'Configure AI agents to automate conversations and manage leads',
+    'aiAgent.help': 'The AI Agent allows you to automate conversations using artificial intelligence.\n\n• Create agents that automatically respond to received messages\n• Configure custom prompts to define agent behavior\n• Choose between manual mode (fully controlled) or assisted mode (with suggestions)\n• Set wait time before responding\n• Enable audio transcription to process voice messages\n• View and manage leads generated from conversations',
     'aiAgent.viewLeads': 'View Leads',
     'aiAgent.delete': 'Delete',
     'aiAgent.newAgent': 'New Agent',
@@ -1583,6 +1616,8 @@ const translations = {
 
     // Group Manager
     'groupManager.title': 'Group Manager',
+    'groupManager.subtitle': 'Manage WhatsApp groups, create new groups and configure permissions',
+    'groupManager.help': 'The Group Manager allows you to manage WhatsApp groups.\n\n• View all groups from an instance\n• Create new groups with participants from your CRM\n• Edit group information (name, description, picture)\n• Configure permissions (announcements, lock)\n• Generate invite codes for groups\n• Mention all participants in a group\n• Manage participants and administrators',
     'groupManager.loading': 'Loading groups...',
     'groupManager.refreshing': 'Refreshing...',
     'groupManager.refresh': 'Refresh Groups',
@@ -1714,6 +1749,7 @@ const translations = {
     // Documentation
     'documentation.title': 'External API Documentation',
     'documentation.subtitle': 'Integrate your application with Clerky using our REST API. Send messages, manage contacts, and much more.',
+    'documentation.help': 'The API Documentation provides all the information needed to integrate your application with Clerky.\n\n• Available endpoints for sending messages\n• Authentication using instance tokens\n• Examples of requests and responses\n• Code examples in different languages\n• Contact and message management\n• Webhooks to receive real-time notifications\n\nSelect an instance to view its API token and start integrating.',
     'documentation.selectInstance': 'Select an instance to view the token:',
     'documentation.apiToken': 'API Token:',
     'documentation.copyToken': 'Copy token',

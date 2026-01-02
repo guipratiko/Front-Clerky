@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { AppLayout } from '../components/Layout';
-import { Card, Button } from '../components/UI';
+import { Card, Button, HelpIcon } from '../components/UI';
 import { useLanguage } from '../contexts/LanguageContext';
 import { useAuth } from '../contexts/AuthContext';
 import { useSocket, DispatchUpdateData } from '../hooks/useSocket';
@@ -231,34 +231,35 @@ const Dispatches: React.FC = () => {
           <h1 className="text-3xl font-bold text-clerky-backendText dark:text-gray-200 mb-2">
             {t('dispatches.title')}
           </h1>
-          <p className="text-gray-600 dark:text-gray-400">
+          <p className="text-gray-600 dark:text-gray-400 inline-flex items-center gap-2">
             {t('dispatches.subtitle')}
+            <HelpIcon helpKey="dispatches" className="ml-1" />
           </p>
         </div>
 
         {/* Tabs */}
         <div className="flex gap-2 mb-6 border-b border-gray-200 dark:border-gray-700">
-          <button
-            onClick={() => setActiveTab('templates')}
-            className={`px-4 py-2 font-medium transition-colors ${
-              activeTab === 'templates'
-                ? 'text-blue-600 dark:text-blue-400 border-b-2 border-blue-600 dark:border-blue-400'
-                : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200'
-            }`}
-          >
-            {t('dispatches.templates')}
-          </button>
-          <button
-            onClick={() => setActiveTab('dispatches')}
-            className={`px-4 py-2 font-medium transition-colors ${
-              activeTab === 'dispatches'
-                ? 'text-blue-600 dark:text-blue-400 border-b-2 border-blue-600 dark:border-blue-400'
-                : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200'
-            }`}
-          >
-            {t('dispatches.dispatches')}
-          </button>
-        </div>
+            <button
+              onClick={() => setActiveTab('templates')}
+              className={`px-4 py-2 font-medium transition-colors ${
+                activeTab === 'templates'
+                  ? 'text-blue-600 dark:text-blue-400 border-b-2 border-blue-600 dark:border-blue-400'
+                  : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200'
+              }`}
+            >
+              {t('dispatches.templates')}
+            </button>
+            <button
+              onClick={() => setActiveTab('dispatches')}
+              className={`px-4 py-2 font-medium transition-colors ${
+                activeTab === 'dispatches'
+                  ? 'text-blue-600 dark:text-blue-400 border-b-2 border-blue-600 dark:border-blue-400'
+                  : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200'
+              }`}
+            >
+              {t('dispatches.dispatches')}
+            </button>
+          </div>
 
         {/* Conteúdo das Tabs */}
         {activeTab === 'templates' ? (

@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { AppLayout } from '../components/Layout';
-import { Card } from '../components/UI';
+import { Card, HelpIcon } from '../components/UI';
 import { useAuth } from '../contexts/AuthContext';
 import { useLanguage } from '../contexts/LanguageContext';
 import { useTheme } from '../contexts/ThemeContext';
@@ -539,14 +539,15 @@ const Home: React.FC = () => {
 
   return (
     <AppLayout>
-      <div className="p-4 md:p-6 space-y-4 md:space-y-6 animate-fadeIn">
+      <div className="animate-fadeIn space-y-4 md:space-y-6">
         {/* Mensagem de Boas-vindas */}
         <Card padding="md" shadow="lg" className="p-4 md:p-8">
           <h1 className="text-xl md:text-2xl font-bold text-clerky-backendText dark:text-gray-200 mb-2">
             {t('dashboard.welcome', { name: user?.name?.split(' ')[0] || '' })}
           </h1>
-          <p className="text-sm md:text-base text-gray-600 dark:text-gray-300">
+          <p className="text-sm md:text-base text-gray-600 dark:text-gray-300 inline-flex items-center gap-2">
             {t('dashboard.welcomeMessage')}
+            <HelpIcon helpKey="dashboard" className="ml-1" />
           </p>
         </Card>
 

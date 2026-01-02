@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { AppLayout } from '../components/Layout';
-import { Card, Button, Modal, Input } from '../components/UI';
+import { Card, Button, Modal, Input, HelpIcon } from '../components/UI';
 import { useLanguage } from '../contexts/LanguageContext';
 import { useAuth } from '../contexts/AuthContext';
 import { aiAgentAPI, instanceAPI, Instance } from '../services/api';
@@ -245,37 +245,49 @@ const AIAgentPage: React.FC = () => {
 
   return (
     <AppLayout>
-      <div className="p-6 space-y-6">
-        <div className="flex items-center justify-between">
-          <h1 className="text-2xl font-bold text-clerky-backendText dark:text-gray-200">
+      <div className="animate-fadeIn">
+        <div className="mb-6">
+          <h1 className="text-3xl font-bold text-clerky-backendText dark:text-gray-200 mb-2">
             {t('aiAgent.title')}
           </h1>
-          <div className="flex gap-2">
+          <p className="text-gray-600 dark:text-gray-400 inline-flex items-center gap-2">
+            {t('aiAgent.subtitle')}
+            <HelpIcon helpKey="aiAgent" className="ml-1" />
+          </p>
+        </div>
+
+        {/* Divisor e Botão de Ação */}
+        <div className="border-t border-gray-200 dark:border-gray-700 pt-6 mb-6">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
             {selectedAgent && (
-              <>
+              <div className="flex gap-2 flex-wrap">
                 <Button variant="outline" onClick={handleViewLeads}>
                   {t('aiAgent.viewLeads')} ({leads.length})
                 </Button>
                 <Button variant="outline" onClick={handleDeleteAgent}>
                   {t('aiAgent.delete')}
                 </Button>
-              </>
+              </div>
             )}
-            <Button
-              onClick={() => {
-                setSelectedAgent(null);
-                setAgentName('');
-                setAgentInstanceId('');
-                setAgentPrompt('');
-                setAgentWaitTime(13);
-                setAgentIsActive(true);
-                setAgentTranscribeAudio(true);
-                setAgentType('manual');
-                setAssistedConfig({});
-              }}
-            >
-              {t('aiAgent.newAgent')}
-            </Button>
+            <div className={`flex justify-end ${selectedAgent ? 'w-full sm:w-auto' : 'w-full'}`}>
+              <Button
+                variant="primary"
+                size="lg"
+                onClick={() => {
+                  setSelectedAgent(null);
+                  setAgentName('');
+                  setAgentInstanceId('');
+                  setAgentPrompt('');
+                  setAgentWaitTime(13);
+                  setAgentIsActive(true);
+                  setAgentTranscribeAudio(true);
+                  setAgentType('manual');
+                  setAssistedConfig({});
+                }}
+              >
+                {t('aiAgent.newAgent')}
+              </Button>
+            </div>
           </div>
         </div>
 

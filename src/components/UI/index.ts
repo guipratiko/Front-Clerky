@@ -10,4 +10,5 @@ export { default as FloatingLanguageToggle } from './FloatingLanguageToggle';
 export { default as ProfilePictureUpload } from './ProfilePictureUpload';
 export { default as Modal } from './Modal';
 export { default as ImageCrop } from './ImageCrop';
+export { default as HelpIcon } from './HelpIcon';
 

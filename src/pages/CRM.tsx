@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useLayoutEffect, useCallback, useRef } from 'react';
 import { AppLayout } from '../components/Layout';
-import { Card, Button, Modal } from '../components/UI';
+import { Card, Button, Modal, HelpIcon } from '../components/UI';
 import { useAuth } from '../contexts/AuthContext';
 import { useLanguage } from '../contexts/LanguageContext';
 import { crmAPI, Contact, CRMColumn, Message, instanceAPI, Instance, Label } from '../services/api';
@@ -1406,6 +1406,15 @@ const CRM: React.FC = () => {
   return (
     <AppLayout>
       <div className="animate-fadeIn">
+        <div className="mb-6">
+          <h1 className="text-3xl font-bold text-clerky-backendText dark:text-gray-200 mb-2">
+            {t('crm.title')}
+          </h1>
+          <p className="text-gray-600 dark:text-gray-400 inline-flex items-center gap-2">
+            {t('crm.subtitle')}
+            <HelpIcon helpKey="crm" className="ml-1" />
+          </p>
+        </div>
         <div className="flex items-center justify-between mb-6">
           <div className="flex gap-4 items-center">
             {isLoadingInstances ? (

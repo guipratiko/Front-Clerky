@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { AppLayout } from '../components/Layout';
-import { Card, Button, Modal } from '../components/UI';
+import { Card, Button, Modal, HelpIcon } from '../components/UI';
 import { useLanguage } from '../contexts/LanguageContext';
 import { useAuth } from '../contexts/AuthContext';
 import { instanceAPI, Instance, UpdateInstanceSettingsData } from '../services/api';
@@ -207,10 +207,23 @@ const Instances: React.FC = () => {
   return (
     <AppLayout>
       <div className="animate-fadeIn max-w-7xl mx-auto">
-        <div className="flex items-center justify-end mb-6">
-          <Button variant="primary" size="lg" onClick={() => setShowCreateModal(true)}>
-            {t('instances.create')}
-          </Button>
+        <div className="mb-6">
+          <h1 className="text-3xl font-bold text-clerky-backendText dark:text-gray-200 mb-2">
+            {t('instances.title')}
+          </h1>
+          <p className="text-gray-600 dark:text-gray-400 inline-flex items-center gap-2">
+            {t('instances.subtitle')}
+            <HelpIcon helpKey="instances" className="ml-1" />
+          </p>
+        </div>
+        
+        {/* Divisor e Botão de Ação */}
+        <div className="border-t border-gray-200 dark:border-gray-700 pt-6 mb-6">
+          <div className="flex justify-end">
+            <Button variant="primary" size="lg" onClick={() => setShowCreateModal(true)}>
+              {t('instances.create')}
+            </Button>
+          </div>
         </div>
 
         {successMessage && (

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { AppLayout } from '../components/Layout';
-import { Card } from '../components/UI';
+import { Card, HelpIcon } from '../components/UI';
 import { useAuth } from '../contexts/AuthContext';
 import { useLanguage } from '../contexts/LanguageContext';
 import { instanceAPI, Instance } from '../services/api';
@@ -60,13 +60,14 @@ const Documentation: React.FC = () => {
 
   return (
     <AppLayout>
-      <div className="animate-fadeIn max-w-6xl mx-auto">
-        <div className="mb-8">
+      <div className="animate-fadeIn">
+        <div className="mb-6">
           <h1 className="text-3xl font-bold text-clerky-backendText dark:text-gray-200 mb-2">
             {t('documentation.title')}
           </h1>
-          <p className="text-gray-600 dark:text-gray-400">
+          <p className="text-gray-600 dark:text-gray-400 inline-flex items-center gap-2">
             {t('documentation.subtitle')}
+            <HelpIcon helpKey="documentation" className="ml-1" />
           </p>
         </div>
 

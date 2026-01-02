@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { AppLayout } from '../components/Layout';
-import { Card, Button, Modal, Input } from '../components/UI';
+import { Card, Button, Modal, Input, HelpIcon } from '../components/UI';
 import { useLanguage } from '../contexts/LanguageContext';
 import { useAuth } from '../contexts/AuthContext';
 import { workflowAPI, instanceAPI, Workflow, WorkflowNode, WorkflowEdge, WorkflowContact, Instance } from '../services/api';
@@ -265,18 +265,23 @@ const MindClerky: React.FC = () => {
     return (
       <AppLayout>
         <div className="animate-fadeIn">
-          <div className="flex items-center justify-between mb-6">
-            <div>
-              <h1 className="text-2xl font-bold text-clerky-backendText dark:text-gray-200">
-                {t('mindClerky.title')}
-              </h1>
-              <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-                {t('mindClerky.subtitle')}
-              </p>
+          <div className="mb-6">
+            <h1 className="text-3xl font-bold text-clerky-backendText dark:text-gray-200 mb-2">
+              {t('mindClerky.title')}
+            </h1>
+            <p className="text-gray-600 dark:text-gray-400 inline-flex items-center gap-2">
+              {t('mindClerky.subtitle')}
+              <HelpIcon helpKey="mindClerky" className="ml-1" />
+            </p>
+          </div>
+
+          {/* Divisor e Botão de Ação */}
+          <div className="border-t border-gray-200 dark:border-gray-700 pt-6 mb-6">
+            <div className="flex justify-end">
+              <Button variant="primary" size="lg" onClick={() => setShowCreateModal(true)}>
+                {t('mindClerky.createWorkflow')}
+              </Button>
             </div>
-            <Button onClick={() => setShowCreateModal(true)}>
-              {t('mindClerky.createWorkflow')}
-            </Button>
           </div>
 
           {error && (

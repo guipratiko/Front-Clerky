@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { AppLayout } from '../components/Layout';
-import { Card, Button, Modal, Input } from '../components/UI';
+import { Card, Button, Modal, Input, HelpIcon } from '../components/UI';
 import ImageCrop from '../components/UI/ImageCrop';
 import { useLanguage } from '../contexts/LanguageContext';
 import { useAuth } from '../contexts/AuthContext';
@@ -1035,22 +1035,23 @@ const GroupManager: React.FC = () => {
 
   return (
     <AppLayout>
-      <div className="p-4 md:p-6 space-y-4 md:space-y-6">
-        {/* Header - Responsivo */}
-        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-          <h1 className="text-xl md:text-2xl font-bold text-clerky-backendText dark:text-gray-200">
+      <div className="animate-fadeIn space-y-4 md:space-y-6">
+        <div className="mb-6">
+          <h1 className="text-3xl font-bold text-clerky-backendText dark:text-gray-200 mb-2">
             {t('groupManager.title')}
           </h1>
-          <div className="flex flex-col sm:flex-row gap-2 w-full md:w-auto">
-            <Button 
-              onClick={handleOpenCreateModal} 
-              disabled={!selectedInstance}
-              className="w-full sm:w-auto"
-            >
-              {t('groupManager.createGroup')}
-            </Button>
+          <p className="text-gray-600 dark:text-gray-400 inline-flex items-center gap-2">
+            {t('groupManager.subtitle')}
+            <HelpIcon helpKey="groupManager" className="ml-1" />
+          </p>
+        </div>
+
+        {/* Divisor e Botão de Ação */}
+        <div className="border-t border-gray-200 dark:border-gray-700 pt-6 mb-6">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+            {/* Botões secundários à esquerda */}
             {groups.length > 0 && (
-              <>
+              <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
                 <Button 
                   variant="outline" 
                   onClick={() => setShowMentionAllGroupsModal(true)} 
@@ -1067,16 +1068,28 @@ const GroupManager: React.FC = () => {
                 >
                   {t('groupManager.bulkEdit')}
                 </Button>
-              </>
+                <Button 
+                  variant="outline" 
+                  onClick={refreshGroups} 
+                  disabled={isRefreshing || !selectedInstance}
+                  className="w-full sm:w-auto text-sm"
+                >
+                  {isRefreshing ? t('groupManager.refreshing') : t('groupManager.refresh')}
+                </Button>
+              </div>
             )}
-            <Button 
-              variant="outline" 
-              onClick={refreshGroups} 
-              disabled={isRefreshing || !selectedInstance}
-              className="w-full sm:w-auto text-sm"
-            >
-              {isRefreshing ? t('groupManager.refreshing') : t('groupManager.refresh')}
-            </Button>
+            {/* Botão principal à direita */}
+            <div className="flex justify-end w-full sm:w-auto">
+              <Button 
+                variant="primary"
+                size="lg"
+                onClick={handleOpenCreateModal} 
+                disabled={!selectedInstance}
+                className="w-full sm:w-auto"
+              >
+                {t('groupManager.createGroup')}
+              </Button>
+            </div>
           </div>
         </div>
 
